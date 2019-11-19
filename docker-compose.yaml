@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+
+  cli:
+    image: marcellodesales/cloner:${BIN_VERSION:-0.1.0}
+    build:
+      context: .
+      args:
+        - BIN_NAME=cloner
+        - BIN_VERSION=${BIN_VERSION:-0.1.0}
