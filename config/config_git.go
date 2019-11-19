@@ -18,6 +18,8 @@ package config
 import (
 	"errors"
 	"github.com/marcellodesales/cloner/util"
+	"os"
+	"path"
 )
 
 /**
@@ -26,6 +28,8 @@ import (
 type Git struct {
 	// The name of the protos used by the generated Stubs
 	DockerImage string `mapstructure:"dockerImage"`
+
+	CloneBaseDir string `mapstructure:"cloneBaseDir"`
 
 	// The list of plugins to initialize
 	Properties map[string]string `mapstructure:"properties"`
@@ -43,7 +47,20 @@ func parseGitConfig() (*Git, error) {
 		return nil, err
 	}
 
+	// Set default values
+	setDefaultValues(config)
+
 	return config, nil
+}
+
+func setDefaultValues(git *Git) {
+	if git.DockerImage == "" {
+		git.DockerImage = "alpine/git"
+	}
+	if git.CloneBaseDir == "" {
+		homeDir, _ := os.UserHomeDir()
+		git.CloneBaseDir = path.Join(homeDir, "cloner")
+	}
 }
 
 /**

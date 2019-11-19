@@ -49,7 +49,7 @@ func GetConfigFilePath() string {
 func ReadConfig(configPath string, result interface{}) error {
 	configFilePath, err := getConfigFilePath()
 	if err != nil {
-		os.Exit(1)
+		return nil
 	}
 	log.Debugf("Loading the config object '%s' config from '%s'", configPath, configFilePath)
 
@@ -116,7 +116,7 @@ func getConfigFilePath() (string, error) {
 		return configFile, nil
 
 	} else {
-		log.Errorf("Can't parse configuration: %s", err)
+		log.Debugf("can't parse configuration: %s", err)
 		return "", err
 	}
 }
