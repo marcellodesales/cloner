@@ -16,8 +16,10 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	"github.com/marcellodesales/cloner/api/git"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // initCmd represents the init command
@@ -26,8 +28,35 @@ var initCmd = &cobra.Command{
 	Short: "Clones a given git repo",
 	Long: `Clones a given github repo using the handler.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Print()
-		cmd.Help()
+		repo, _ := cmd.Flags().GetString("repo")
+		if repo == "" {
+			log.Errorf("You must provide the github repo clone URL")
+			os.Exit(1)
+		}
+		log.Debugf("Setting up for %s", repo)
+
+		gitRepo, err := git.GitService.ParseRepoString(repo)
+		if err != nil {
+			log.Errorf("Can't parse the Git Repo: %v", err)
+			os.Exit(2)
+		}
+
+		orgDir := git.GitService.GetRepoUserDir(gitRepo)
+		log.Debugf("Preparing the repo dir at %s", orgDir)
+
+		err = git.GitService.MakeRepoUserDir(gitRepo)
+		if err != nil {
+			log.Errorf("Can't create the base clone repo '%s': %v", gitRepo.Type.GetUserDir(), err)
+			os.Exit(3)
+		}
+
+		cloneStdout, err := git.GitService.DockerGitClone(gitRepo)
+		if err != nil {
+			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
+			os.Exit(4)
+		}
+
+		log.Info(cloneStdout)
 	},
 }
 
@@ -42,5 +71,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	initCmd.Flags().StringP("repo", "r", "", "The repo to clone")
 }
