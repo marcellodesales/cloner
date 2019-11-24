@@ -1,34 +1,24 @@
 package util
 
 import (
-	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/thoas/go-funk"
-	"os"
 	"strings"
 )
 
-func SetupViper(configFile, configName, envPrefix string) {
+func SetupViperHomeConfig(configFile, configName, envPrefix string) {
 	// https://github.com/spf13/viper/issues/390#issuecomment-511177615
 	viper.SetConfigType("yaml") // or viper.SetConfigType("YAML")
-	viper.AddConfigPath(".")
 
-	if configFile != "" {
-		viper.SetConfigName(configFile)
+	homeDir, _ := homedir.Dir()
+	viper.AddConfigPath(homeDir)
 
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		viper.AddConfigPath(home)
-		// the name of the config file
-		viper.SetConfigName(configName)
-	}
+	// https://github.com/spf13/viper/issues/390#issuecomment-336464039
+	// the name of the config file
+	viper.SetConfigName(configName)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	// the prefix of env vars to override the configs
@@ -51,7 +41,7 @@ func ReadConfig(configPath string, result interface{}) error {
 	if err != nil {
 		return nil
 	}
-	log.Debugf("Loading the config object '%s' config from '%s'", configPath, configFilePath)
+	log.Infof("Loading the config object '%s' config from '%s'", configPath, configFilePath)
 
 	// Looking for the key of configuration in the config
 	log.Tracef("The keys in the config: %v", viper.AllKeys())

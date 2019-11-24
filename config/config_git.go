@@ -20,6 +20,7 @@ import (
 	"github.com/marcellodesales/cloner/util"
 	"os"
 	"path"
+	"strings"
 )
 
 /**
@@ -57,9 +58,13 @@ func setDefaultValues(git *Git) {
 	if git.DockerImage == "" {
 		git.DockerImage = "alpine/git"
 	}
+	homeDir, _ := os.UserHomeDir()
 	if git.CloneBaseDir == "" {
-		homeDir, _ := os.UserHomeDir()
 		git.CloneBaseDir = path.Join(homeDir, "cloner")
+
+	} else if strings.Contains(git.CloneBaseDir, "~") {
+		// mkdir in go works, but Since it will be used by docker, we need to expland it
+		git.CloneBaseDir = strings.ReplaceAll(git.CloneBaseDir, "~", homeDir)
 	}
 }
 

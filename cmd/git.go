@@ -42,7 +42,7 @@ var initCmd = &cobra.Command{
 		}
 
 		orgDir := git.GitService.GetRepoUserDir(gitRepo)
-		log.Debugf("Preparing the repo dir at %s", orgDir)
+		log.Infof("Cloning the provided repo at %s", orgDir)
 
 		err = git.GitService.MakeRepoUserDir(gitRepo)
 		if err != nil {
@@ -52,11 +52,18 @@ var initCmd = &cobra.Command{
 
 		cloneStdout, err := git.GitService.DockerGitClone(gitRepo)
 		if err != nil {
-			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
-			os.Exit(4)
+			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), cloneStdout)
+		} else {
+			log.Info("Finished cloning...")
 		}
 
-		log.Info(cloneStdout)
+		// Show the files cloned
+		treeStdout, err := git.GitService.DockerFilesTree(gitRepo)
+		if err != nil {
+			log.Errorf("Can't show the repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
+			os.Exit(4)
+		}
+		log.Infof(treeStdout)
 	},
 }
 

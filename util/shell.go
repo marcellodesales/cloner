@@ -79,10 +79,10 @@ func ShellExecuteAsync(command string) (string, string, error) {
 
 	err = execCmd.Wait()
 	if err != nil {
-		return "", "", errors.New(fmt.Sprintf("Can't wait for execution: '%v'", err))
+		return string(stdoutBuf.Bytes()), string(stderrBuf.Bytes()), errors.New(fmt.Sprintf("Can't wait for execution: '%v'", err))
 	}
 	if errStdout != nil || errStderr != nil {
-		return "", "", errors.New(fmt.Sprintf("Can't capture stdout or stderr"))
+		return string(stdoutBuf.Bytes()), string(stderrBuf.Bytes()), errors.New(fmt.Sprintf("Can't capture stdout or stderr"))
 	}
 
 	// Stdout and StdErr
@@ -93,9 +93,9 @@ func ShellExecute(command string) (string, error) {
 	var stdout string
 	if IsLogInDebug() {
 		// Execute in the background and collect the stdout
-		syncStdout, _, err := ShellExecuteAsync(command)
+		syncStdout, syncStdErr, err := ShellExecuteAsync(command)
 		if err != nil {
-			return "", err
+			return syncStdErr, err
 		}
 		stdout = syncStdout
 

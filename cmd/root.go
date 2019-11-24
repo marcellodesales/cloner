@@ -61,7 +61,7 @@ func init() {
 	cobra.OnInitialize(
 		func() {
 			// Sets up Viper with the given config file name
-			util.SetupViper(cfgFile, "cloner", "CLONER")
+			util.SetupViperHomeConfig(cfgFile, "cloner", "CLONER")
 		},
 		func() {
 			// Setups up the configuration parsed from Viper config (maps -> structs)
