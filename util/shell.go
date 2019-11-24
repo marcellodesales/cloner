@@ -90,22 +90,10 @@ func ShellExecuteAsync(command string) (string, string, error) {
 }
 
 func ShellExecute(command string) (string, error) {
-	var stdout string
-	if IsLogInDebug() {
-		// Execute in the background and collect the stdout
-		syncStdout, syncStdErr, err := ShellExecuteAsync(command)
-		if err != nil {
-			return syncStdErr, err
-		}
-		stdout = syncStdout
-
-	} else {
-		// Executes async, show the docker execution logs and collect the log lines
-		syncStdout, err := ShellExecuteSync(command)
-		if err != nil {
-			return "", err
-		}
-		stdout = syncStdout
+	// Execute in the background and collect the stdout
+	syncStdout, syncStdErr, err := ShellExecuteAsync(command)
+	if err != nil {
+		return syncStdErr, err
 	}
-	return stdout, nil
+	return syncStdout, nil
 }

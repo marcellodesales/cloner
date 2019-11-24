@@ -40,5 +40,6 @@ dist: build ## Makes the dir ./dist with binaries from docker image
 
 release: dist ## Publishes the built binaries in Github Releases
 	echo "Releasing next version $(BIN_VERSION)"
-	git tag v$(BIN_VERSION) && git push origin v$(BIN_VERSION) || true
+	git tag v$(BIN_VERSION) || true
+	git push origin v$(BIN_VERSION) || true
 	docker run -ti -e GITHUB_HOST=$(PUBLISH_GITHUB_HOST) -e GITHUB_USER=$(PUBLISH_GITHUB_USER) -e GITHUB_TOKEN=$(PUBLISH_GITHUB_TOKEN) -e GITHUB_REPOSITORY=$(PUBLISH_GITHUB_ORG)/$(APP_NAME) -e HUB_PROTOCOL=https -v $(PWD):/git marcellodesales/github-hub release create --prerelease --attach dist/$(APP_NAME)-darwin-amd64 --attach dist/$(APP_NAME)-linux-amd64 --attach dist/$(APP_NAME)-windows-amd64.exe -m "$(APP_NAME) $(BIN_VERSION) release" v$(BIN_VERSION)
