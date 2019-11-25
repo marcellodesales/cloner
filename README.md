@@ -97,7 +97,7 @@ Requires `make` and `docker` to build as the build is dockerized for Golang.
   * Where, # is incremented at each release automatically.
 
 ```console
-$ make release PUBLISH_GITHUB_TOKEN=6100758b68072e0570ce0c250a6e398cadbeb326
+$ make release PUBLISH_GITHUB_TOKEN=6100**********dbeb326
 fatal: No names found, cannot describe anything.
 rm -rf dist
 mkdir dist
