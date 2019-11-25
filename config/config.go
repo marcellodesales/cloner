@@ -50,7 +50,7 @@ func initConfig() (*Configuration, error) {
 		git.DockerImage = "alpine/git"
 	}
 	config.Git = *git
-	log.Infof("Initializing config for git handler %v", config.Git)
+	log.Debugf("Initializing config for git handler %v", config.Git)
 
 	// The path for config
 	config.FilePath = util.GetConfigFilePath()

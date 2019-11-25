@@ -19,7 +19,6 @@ import (
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 	"os"
-	"strings"
 )
 
 /**
@@ -50,7 +49,7 @@ func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone) (string
  * Show the tree of files generated
  */
 func (service GitServiceType) DockerFilesTree(gitRepoClone *GitRepoClone) (string, error) {
-	workingDir := service.GetRepoUserDir(gitRepoClone)
+	workingDir := service.GetRepoCloneDir(gitRepoClone)
 	dockerCommandArgs := []string{workingDir, workingDir, workingDir}
 
 	// The docker command to be passed
@@ -62,11 +61,8 @@ func (service GitServiceType) DockerFilesTree(gitRepoClone *GitRepoClone) (strin
 	stdout, err := dockerCommandExecutor.Execute()
 	// For now, just exit from errors
 	if err != nil {
-		return "", err
+		return stdout, err
 	}
-
-	// Just print the correct path
-	stdout = strings.ReplaceAll(stdout, "/app", workingDir)
 
 	return stdout, nil
 }

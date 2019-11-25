@@ -12,31 +12,6 @@ import (
 )
 
 /**
- * Executes the shell and wait until it finishes executing
- * The result or error is provided
- * https://stackoverflow.com/questions/1877045/how-do-you-get-the-output-of-a-system-command-in-go/54586179#54586179
- */
-func ShellExecuteSync(command string) (string, error) {
-	commandArgs := strings.Split(command, " ")
-	baseCmd := commandArgs[0]
-	cmdArgs := commandArgs[1:]
-
-	var execCmd *exec.Cmd
-	if strings.Contains(command, "|") {
-		// https://stackoverflow.com/questions/10781516/how-to-pipe-several-commands-in-go/30329351#30329351
-		execCmd = exec.Command("bash","-c", baseCmd + " " + strings.Join(cmdArgs, " "))
-
-	} else {
-		execCmd = exec.Command(baseCmd, cmdArgs...)
-	}
-	out, err := execCmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
-
-/**
  * Executes the shell and show the live results, returning the
  * output and error.
  * https://hackmongo.com/post/reading-os-exec-cmd-output-without-race-conditions/
@@ -55,38 +30,51 @@ func ShellExecuteAsync(command string) (string, string, error) {
 		execCmd = exec.Command(baseCmd, cmdArgs...)
 	}
 
-	var stdoutBuf, stderrBuf bytes.Buffer
+	// Make pointers to the stdout and stderr for debugging
+	var stdoutBuf, stderrBuf, nodebugOutBuf, nodebugErrBuf bytes.Buffer
 	stdoutIn, _ := execCmd.StdoutPipe()
 	stderrIn, _ := execCmd.StderrPipe()
-
-	var errStdout, errStderr error
 	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
 	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
+
 	err := execCmd.Start()
 	if err != nil {
 		return "", "", errors.New(fmt.Sprintf("Can't execute command: '%v'", err))
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	var errStdout, errStderr error
+	if IsLogInDebug() {
+		// if it is in debug, show the error in the stdout
+		var wg sync.WaitGroup
+		wg.Add(1)
 
-	go func() {
-		_, errStdout = io.Copy(stdout, stdoutIn)
-		wg.Done()
-	}()
-	_, errStderr = io.Copy(stderr, stderrIn)
-	wg.Wait()
+		go func() {
+			if IsLogInDebug() {
+				_, errStdout = io.Copy(stdout, stdoutIn)
+			}
+			wg.Done()
+		}()
+		_, errStderr = io.Copy(stderr, stderrIn)
+		wg.Wait()
+
+	} else {
+		_, errStdout = io.Copy(&nodebugOutBuf, stdoutIn)
+		_, errStderr = io.Copy(&nodebugErrBuf, stderrIn)
+	}
 
 	err = execCmd.Wait()
 	if err != nil {
-		return string(stdoutBuf.Bytes()), string(stderrBuf.Bytes()), errors.New(fmt.Sprintf("Can't wait for execution: '%v'", err))
-	}
-	if errStdout != nil || errStderr != nil {
-		return string(stdoutBuf.Bytes()), string(stderrBuf.Bytes()), errors.New(fmt.Sprintf("Can't capture stdout or stderr"))
+		if IsLogInDebug() {
+			return "", string(stderrBuf.Bytes()), errStderr
+		}
+		return "", string(nodebugErrBuf.Bytes()), errors.New(string(nodebugErrBuf.Bytes()))
 	}
 
+	if IsLogInDebug() {
+		return string(stdoutBuf.Bytes()), "", nil
+	}
 	// Stdout and StdErr
-	return string(stdoutBuf.Bytes()), string(stderrBuf.Bytes()), nil
+	return string(nodebugOutBuf.Bytes()), "", nil
 }
 
 func ShellExecute(command string) (string, error) {

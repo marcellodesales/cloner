@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"github.com/marcellodesales/cloner/api/git"
+	"github.com/marcellodesales/cloner/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
@@ -58,12 +59,15 @@ var initCmd = &cobra.Command{
 		}
 
 		// Show the files cloned
-		treeStdout, err := git.GitService.DockerFilesTree(gitRepo)
+		stdout, err := git.GitService.DockerFilesTree(gitRepo)
 		if err != nil {
 			log.Errorf("Can't show the repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(4)
 		}
-		log.Infof(treeStdout)
+
+		if !util.IsLogInDebug() {
+			log.Infof("\n%s", stdout)
+		}
 	},
 }
 
