@@ -92,6 +92,10 @@ Requires `make` and `docker` to build as the build is dockerized for Golang.
 > ATTENTION: Make sure to have a Github token with write permissions to the repo
 >  * https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
 
+* Initial releases MUST have the code fully pushed to the repo
+* Git with versions are created in the format of `yy.mm.#`
+  * Where, # is incremented at each release automatically.
+
 ```console
 $ make release PUBLISH_GITHUB_TOKEN=6100758b68072e0570ce0c250a6e398cadbeb326
 fatal: No names found, cannot describe anything.
