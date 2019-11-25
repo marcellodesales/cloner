@@ -25,6 +25,10 @@ help: ## This help.
 
 clean: ## Deletes the directory ./build
 	rm -rf $(DIST_DIR)
+	mkdir $(DIST_DIR)
+
+local: clean ## Makes a local build using Go
+	GO111MODULE=on CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o dist/cloner-darwin-local main.go
 
 build: clean ## Builds the docker image with binaries
 	#docker build -t $(APP_NAME) --build-arg BIN_NAME=$(APP_NAME) --build-arg BIN_VERSION=$(BIN_VERSION) .
