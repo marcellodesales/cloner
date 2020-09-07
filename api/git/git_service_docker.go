@@ -91,12 +91,18 @@ func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone, config 
 /**
  * Show the tree of files generated
  */
-func (service GitServiceType) DockerFilesTree(gitRepoClone *GitRepoClone) (string, error) {
-	workingDir := service.GetRepoCloneDir(gitRepoClone)
+func (service GitServiceType) DockerFilesTree(gitRepoClone *GitRepoClone, config *config.Configuration) (string, error) {
+	workingDir := service.GetRepoLocalPath(gitRepoClone, config)
 	dockerCommandArgs := []string{workingDir, workingDir, workingDir}
 
 	// The docker command to be passed
 	dockerCommand := "docker container run --rm -v %s:%s iankoulski/tree %s"
+
+	// Just a single level at Info
+	if !util.IsLogInDebug() {
+		dockerCommand += " -L 1"
+	}
+
 	// Create a new Executor
 	dockerCommandExecutor := util.NewDockerExecutor(dockerCommand, dockerCommandArgs)
 
