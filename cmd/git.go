@@ -94,6 +94,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	initCmd.Flags().StringP("repo", "r", "", "The repo URL to clone")
+
 	var verbose = false
+	// https://github.com/spf13/cobra/issues/818#issuecomment-489021216
 	initCmd.Flags().BoolVarP(&verbose, "force", "f", false, "Forces cloning by deleting existing dir")
 }
