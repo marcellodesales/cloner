@@ -81,7 +81,10 @@ func ShellExecute(command string) (string, error) {
 	// Execute in the background and collect the stdout
 	syncStdout, syncStdErr, err := ShellExecuteAsync(command)
 	if err != nil {
-		return syncStdErr, err
+		return "", err
+	}
+	if syncStdErr != "" {
+		return "", errors.New(syncStdErr)
 	}
 	return syncStdout, nil
 }

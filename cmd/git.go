@@ -60,13 +60,13 @@ var initCmd = &cobra.Command{
 			os.Exit(4)
 		}
 
-		cloneStdout, err := git.GitService.DockerGitClone(gitRepo, config.INSTANCE)
+		_, err = git.GitService.DockerGitClone(gitRepo, config.INSTANCE)
 		if err != nil {
-			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), cloneStdout)
+			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(5)
 
 		} else {
-			log.Info("Finished cloning...")
+			log.Info("Done...")
 		}
 
 		// Show the files cloned

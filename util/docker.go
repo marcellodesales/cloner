@@ -57,7 +57,7 @@ func (dockerExecutor *DockerExecutor) Execute() (string, error) {
 	stdout, err := ShellExecute(dockerExecutor.RawCommand)
 	if err != nil {
 		// stdout has the value of the error
-		log.Debugf("Couldn't execute docker command: %v", stdout)
+		log.Debugf("Couldn't execute docker command: %v", err)
 		return stdout, err
 
 	} else {
