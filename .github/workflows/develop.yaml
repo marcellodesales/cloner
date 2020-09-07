@@ -20,6 +20,10 @@ jobs:
       - name: Makefile + Dockerfile docker build
         run: make build
 
+      # Produces the binaries at the directory ./dist
+      - name: Makefile + Dockerfile docker dist
+        run: make dist
+
       # https://docs.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts#passing-data-between-jobs-in-a-workflow
       - name: Upload Built Binaries
         uses: actions/upload-artifact@v2
