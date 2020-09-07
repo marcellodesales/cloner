@@ -25,8 +25,20 @@ jobs:
         run: make dist
 
       # https://docs.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts#passing-data-between-jobs-in-a-workflow
-      - name: Upload Built Binaries
+      - name: Upload MacOS Binary
         uses: actions/upload-artifact@v2
         with:
-          name: Distribution Binaries
-          path: dist
+          name: cloner-darwin-amd64
+          path: dist/cloner-darwin-amd64
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner-linux-amd64
+          path: dist/cloner-linux-amd64
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner-windows-amd64.exe
+          path: dist/cloner-windows-amd64.exe

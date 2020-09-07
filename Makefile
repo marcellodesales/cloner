@@ -37,9 +37,9 @@ build: clean ## Builds the docker image with binaries
 
 dist: build ## Makes the dir ./dist with binaries from docker image
 	@echo "Distribution libraries for version $(BIN_VERSION)"
-	docker run --rm -ti --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-darwin-amd64 /bins"
-	docker run --rm -ti --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-linux-amd64 /bins"
-	docker run --rm -ti --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-windows-amd64.exe /bins"
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-darwin-amd64 /bins"
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-linux-amd64 /bins"
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-windows-amd64.exe /bins"
 	ls -la $(PWD)/$(DIST_DIR)
 
 release: dist ## Publishes the built binaries in Github Releases
