@@ -49,12 +49,12 @@ func parseGitConfig() (*Git, error) {
 	}
 
 	// Set default values
-	setDefaultValues(config)
+	setDefaultCliValues(config)
 
 	return config, nil
 }
 
-func setDefaultValues(git *Git) {
+func setDefaultCliValues(git *Git) {
 	if git.DockerImage == "" {
 		git.DockerImage = "alpine/git"
 	}
@@ -71,9 +71,13 @@ func setDefaultValues(git *Git) {
 /**
  * Validate the initialization
  */
-func validateInitConfig(init *Git) error {
-	if init.DockerImage == "" {
-		return errors.New("can't initialize: git.name must be provided")
+func validateInitConfig(git *Git) error {
+	if git.DockerImage == "" {
+		git.DockerImage = "alpine/git"
+		return nil
+	}
+	if git.CloneBaseDir == "" {
+		return errors.New("you must provide the clone base dir")
 	}
 	return nil
 }

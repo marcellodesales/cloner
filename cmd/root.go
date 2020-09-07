@@ -55,13 +55,13 @@ func init() {
 	// will be global for your application.
 
 	// Setup Viper Configuration file type
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "cloner", "cloner", "Spec file (default is $HOME/cloner.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "cloner", "cloner", "Config file (default is $HOME/.cloner.yaml)")
 
 	// Callbacks to initilize, in order, for cobra-viper-anything else
 	cobra.OnInitialize(
 		func() {
 			// Sets up Viper with the given config file name
-			util.SetupViperHomeConfig(cfgFile, "cloner", "CLONER")
+			util.SetupViperHomeConfig(cfgFile, ".cloner", "yaml", "CLONER")
 		},
 		func() {
 			// Setups up the configuration parsed from Viper config (maps -> structs)

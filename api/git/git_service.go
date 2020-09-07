@@ -65,24 +65,24 @@ func (service GitServiceType) ParseRepoString(repo string) (*GitRepoClone, error
 }
 
 /**
- * Get the repo clone dir expected to be created
+ * Get the org
  */
-func (serviceType GitServiceType) GetRepoCloneDir(gitRepoClone *GitRepoClone) string {
-	return path.Join(config.INSTANCE.Git.CloneBaseDir, gitRepoClone.Type.GetRepoDir())
+func (service GitServiceType) GetRepoLocalPath(gitRepoClone *GitRepoClone, config *config.Configuration) string {
+	return path.Join(config.Git.CloneBaseDir, gitRepoClone.Type.GetRepoDir())
 }
 
 /**
  * Get the repo clone dir expected to be created
  */
-func (serviceType GitServiceType) GetRepoUserDir(gitRepoClone *GitRepoClone) string {
-	return path.Join(config.INSTANCE.Git.CloneBaseDir, gitRepoClone.Type.GetUserDir())
+func (service GitServiceType) GetOrgLocalPath(gitRepoClone *GitRepoClone, config *config.Configuration) string {
+	return path.Join(config.Git.CloneBaseDir, gitRepoClone.Type.GetUserDir())
 }
 
 /**
- * Makes the base clone dir
+ * Makes the base clone dir is the org dir since the clone service creates the repo dir
  */
-func (serviceType GitServiceType) MakeRepoUserDir(gitRepoClone *GitRepoClone) error {
-	baseCloneDir := serviceType.GetRepoUserDir(gitRepoClone)
+func (service GitServiceType) MakeOrgDir(gitRepoClone *GitRepoClone, config *config.Configuration) error {
+	baseCloneDir := service.GetOrgLocalPath(gitRepoClone, config)
 	err := os.MkdirAll(baseCloneDir, 0755)
 	if err != nil {
 		return err

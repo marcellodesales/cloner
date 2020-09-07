@@ -46,9 +46,9 @@ func initConfig() (*Configuration, error) {
 	// Validate
 	err = validateInitConfig(git)
 	if err != nil {
-		log.Warn("Initializing with default docker image")
-		git.DockerImage = "alpine/git"
+		log.Error("Can't init because of config errors: %v", err)
 	}
+
 	config.Git = *git
 	log.Debugf("Initializing config for git handler %v", config.Git)
 

@@ -9,15 +9,18 @@ import (
 	"strings"
 )
 
-func SetupViperHomeConfig(configFile, configName, envPrefix string) {
+func SetupViperHomeConfig(configFile, configName, extension, envPrefix string) {
 	// https://github.com/spf13/viper/issues/390#issuecomment-511177615
-	viper.SetConfigType("yaml") // or viper.SetConfigType("YAML")
+	viper.SetConfigType(extension) // or viper.SetConfigType("YAML")
 
 	homeDir, _ := homedir.Dir()
 	viper.AddConfigPath(homeDir)
 
 	// https://github.com/spf13/viper/issues/390#issuecomment-336464039
 	// the name of the config file
+	if string(configFile[0]) != "." {
+		configFile = "." + configFile
+	}
 	viper.SetConfigName(configName)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
@@ -41,7 +44,7 @@ func ReadConfig(configPath string, result interface{}) error {
 	if err != nil {
 		return nil
 	}
-	log.Infof("Loading the config object '%s' config from '%s'", configPath, configFilePath)
+	log.Infof("Loading the config object '%s' from '%s'", configPath, configFilePath)
 
 	// Looking for the key of configuration in the config
 	log.Tracef("The keys in the config: %v", viper.AllKeys())
