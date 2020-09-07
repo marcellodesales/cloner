@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"github.com/marcellodesales/cloner/api/git"
+	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

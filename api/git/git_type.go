@@ -29,6 +29,12 @@ type GitRepoType struct {
 type GitRepoClone struct {
 	Url string
 	Type GitRepoType
+	//Tag string
+	//Branch string
+	//Revision string
+	Depth uint
+	//SparsePaths []string
+	CloneLocation string
 }
 
 func (gitRepo GitRepoType) GetRepoDir() string {
