@@ -1,0 +1,20 @@
+name: release-master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+
+      - name: Makefile + Dockerfile dockerized release
+        env:
+          TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
+        run: make build
+

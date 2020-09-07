@@ -1,4 +1,4 @@
-name: make-develop
+name: build-develop
 
 on:
   push:
@@ -12,7 +12,9 @@ jobs:
       - uses: actions/checkout@master
         with:
           fetch-depth: 1
+
       - name: Makefile local golang build
         run: make local
+
       - name: Makefile + Dockerfile docker build
         run: make build
