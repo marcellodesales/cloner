@@ -8,7 +8,7 @@ PUBLISH_GITHUB_HOST = github.com
 PUBLISH_GITHUB_ORG = marcellodesales
 
 # BUILD_NUMBER expects a tag with format month-day-build_number
-BUILD_NUMBER_PREFIX := $(shell date +%y.%-m)
+BUILD_NUMBER_PREFIX := $(shell date +%y.%m)
 BUILD_NUMBER := $(shell git describe --tags --abbrev=0 | cut -d . -f 3)
 BUILD_NUMBER := $(shell [ ! -z "$(BUILD_NUMBER)" ] && echo $(BUILD_NUMBER) || echo "0")
 
