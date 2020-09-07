@@ -16,26 +16,69 @@ limitations under the License.
 package git
 
 import (
+	"errors"
+	"fmt"
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
-/**
- * List the gitman dependencies by calling Gitman itself
- */
-func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone) (string, error) {
-	// The default Git Docker Image to use
-	gitmanDockerImage := config.INSTANCE.Git.DockerImage
+func (service GitServiceType) VerifyCloneDir(gitRepoClone *GitRepoClone, forceClone bool, config *config.Configuration) error {
+	// The location is provided by the api
+	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
+	log.Debugf("Verifying if the clone path '%s' exists or exists and is empty", gitRepoClone.CloneLocation)
 
-	workingDir := service.GetRepoUserDir(gitRepoClone)
+	if util.DirExists(gitRepoClone.CloneLocation) {
+		if forceClone {
+			util.DeleteDir(gitRepoClone.CloneLocation)
+			return nil
+		}
+
+		// Verify if the user repo is not empty
+		dirIsEmpty, _ := util.IsDirEmpty(gitRepoClone.CloneLocation)
+		if !dirIsEmpty {
+			return errors.New(fmt.Sprintf("clone location '%s' exists and it's not empty", gitRepoClone.CloneLocation))
+		}
+	}
+	return nil
+}
+
+/**
+ * Regular git
+ */
+func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone, config *config.Configuration) (string, error) {
+	// The location is provided by the api
+	var cloneLocation = service.GetOrgLocalPath(gitRepoClone, config)
+
 	userHomeDir, _ := os.UserHomeDir()
-	dockerCommandArgs := []string{userHomeDir, workingDir, gitmanDockerImage, gitRepoClone.Url}
+
+	var dockerCommandExecutor *util.DockerExecutor
+
+	// Only for branch or tag, full paths
+	//var selectedRevision string
+	//if gitRepoClone.Branch != "" {
+	//	selectedRevision = gitRepoClone.Branch
+	//
+	//} else {
+	//	selectedRevision = gitRepoClone.Tag
+	//}
+
+	// Set the depth if it is set
+	depthSetting := ""
+	if gitRepoClone.Depth > 0 {
+		depthSetting = fmt.Sprintf("--depth=%d ", gitRepoClone.Depth)
+	}
+
+	dockerImage := config.Git.DockerImage
+	dockerCommandArgs := []string{userHomeDir, cloneLocation, dockerImage, depthSetting, gitRepoClone.Url}
 	// The docker command to be passed
-	dockerCommand := "docker run --rm -v %s/.ssh:/root/.ssh -v %s:/git %s clone %s"
+	//dockerCommand := "docker run --rm -v %s/.ssh:/root/.ssh -v %s:/git %s clone %s %s --branch %s"
+	dockerCommand := "docker run --rm -v %s/.ssh:/root/.ssh -v %s:/git %s clone %s%s"
 
 	// Create a new Executor
-	dockerCommandExecutor := util.NewDockerExecutor(dockerCommand, dockerCommandArgs)
+	dockerCommandExecutor = util.NewDockerExecutor(dockerCommand, dockerCommandArgs)
+
 	// Execute the command
 	stdout, err := dockerCommandExecutor.Execute()
 	// For now, just exit from errors

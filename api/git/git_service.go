@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 )
 
 type GitServiceType struct {}
@@ -34,11 +35,14 @@ var githubRepoUrlRe = regexp.MustCompile(`(?m)^(?P<protocol>https|git)(:\/\/|@)(
 /**
  * @return a new instance of the GitRepoType
  */
-func (serviceType GitServiceType) ParseRepoString(repo string) (*GitRepoClone, error) {
+func (service GitServiceType) ParseRepoString(repo string) (*GitRepoClone, error) {
 	if repo == "" {
 		return nil, errors.New("you must provide the repo URL")
 	}
 
+	if !strings.HasSuffix(repo, ".git") {
+		repo += ".git"
+	}
 	// Parse the regex
 	gitRepoValues, err := util.RegexProcessString(githubRepoUrlRe, repo)
 	if err != nil {
