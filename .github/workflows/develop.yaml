@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    name: Build CLI Binaries
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
