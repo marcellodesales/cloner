@@ -12,7 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@master
         with:
-          fetch-depth: 1
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags
+          fetch-depth: 0
 
       - name: Makefile + Dockerfile dockerized release
         env:
