@@ -53,7 +53,7 @@ func (service GitServiceType) ParseRepoString(repo string) (*GitRepoClone, error
 		Protocol: gitRepoValues["protocol"],
 		Host: gitRepoValues["host"],
 		User: gitRepoValues["user"],
-		Repo: gitRepoValues["repo"],
+		Repo: gitRepoValues["repo"], // may contain "/" when in repo is in gitlab folders format
 	}
 
 	gitRepoClone := &GitRepoClone{
@@ -79,11 +79,22 @@ func (service GitServiceType) GetOrgLocalPath(gitRepoClone *GitRepoClone, config
 }
 
 /**
- * Makes the base clone dir is the org dir since the clone service creates the repo dir
+ * Makes the base clone dir is the org and parts of the repo dir since the clone service creates the repo dir
  */
-func (service GitServiceType) MakeOrgDir(gitRepoClone *GitRepoClone, config *config.Configuration) error {
+func (service GitServiceType) MakeCloneDir(gitRepoClone *GitRepoClone, config *config.Configuration) error {
 	baseCloneDir := service.GetOrgLocalPath(gitRepoClone, config)
-	err := os.MkdirAll(baseCloneDir, 0755)
+
+	// For gitlab and other hosts with more than a single folder
+	if strings.Contains(gitRepoClone.Type.Repo, "/") {
+		split := strings.Split(gitRepoClone.Type.Repo, "/")
+		for i := 0; i <= len(split) - 2; i++ {
+			baseCloneDir += "/" + split[i]
+		}
+	}
+
+	gitRepoClone.CloneLocation = baseCloneDir
+
+	err := os.MkdirAll(gitRepoClone.CloneLocation, 0755)
 	if err != nil {
 		return err
 	}
