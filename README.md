@@ -1,57 +1,95 @@
 # cloner
 
-Clones a given github URL in a collection of repos.
+This is a CLI that makes git clone simpler with an optional config to clone a given URL 
+in a location for all of your git projects based on the host.
 
 # Why cloner?
 
 * You don't need to change to the directory where your github repos are located.
 * The base git repo will be based on the host, so they all are on the same place.
 
-# What is cloner?
-
-This is a CLI that makes git clone simpler with an optional config.
+```
+$ tree -L 4 ~/dev/
+/Users/marcellodesales/dev/
+├── github.com
+│   ├── comsysto
+│   │   └── redis-locks-with-grafana
+│   └── marcellodesales
+│       └── alpine-git-hub-docker-image
+│   ├── intuit
+│   │   ├── intuit-spring-cloud-config-inspector
+│   │   ├── intuit-spring-cloud-config-validator
+│   │   └── unmazedboot
+├── github.google.com
+│   ├── docker
+│   ├── kubernetes
+├── gitlab.com
+│   └── supercash
+│       └── services
+│           └── sms-gateway-service
+```
 
 # Config
 
-* cloner.yaml
+* `~/.cloner.yaml`
   **git.cloneBaseDir**: as the location for base git host dirs
 
 ```yaml
-$ cat ~/cloner.yaml
+version: 1.0
 git:
   cloneBaseDir: ~/dev
 ```
 
-When the CLI runs, it will create the dirs `git.cloneBaseDir/git_host/git_org/git_repo`
+When the CLI runs, it will create the dirs `git.cloneBaseDir/git.host/git.org/git.repo`
+
+> NOTE: Gitlab's and other hosts may be located in deeper folders.
 
 # Running
 
 ```console
-$ cloner git --repo git@github.company.com:modern-saas-community/idps-for-kubernetes.git
-INFO[0000] Loading the config object 'git' config from '/Users/mdesales/cloner.yaml'
-INFO[2019-11-24T17:21:10-08:00] Cloning the provided repo at /Users/mdesales/dev/github.company.com/modern-saas-community
-ERRO[2019-11-24T17:21:12-08:00] Can't clone the repo at 'github.company.com/modern-saas-community/idps-for-kubernetes': fatal: destination path 'idps-for-kubernetes' already exists and is not an empty directory.
-INFO[2019-11-24T17:21:13-08:00]
-/Users/mdesales/dev/github.intuit.com/modern-saas-community/idps-for-kubernetes
+$ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
+INFO[2020-09-07T16:16:12-03:00] Cloning the provided repo at '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
+INFO[2020-09-07T16:16:15-03:00] Finished cloning...
+INFO[2020-09-07T16:16:16-03:00]
+/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana
+├── Dockerfile
+├── LICENSE
 ├── README.md
-├── idps-k8s-certs-rotator
-│   ├── README.md
-│   └── helm-chart
+├── docker-compose-redis-standalone-grafana.yml
+├── docker-compose-redis-standalone.yml
+├── grafana
+├── img
+├── mvnw
+├── mvnw.cmd
+├── pom.xml
+└── src
 
-7 directories, 24 files
+3 directories, 8 files
 ```
 
 # Development
+
+* Using Golang and Docker to implement the CLI.
 
 ## Design
 
 The design now is as follows:
 
 ```
-main -> cmd -> api/module/service -> config/module
+            +-----+       +-----+      +------+
+main +----->+ CMD +------>+ API +----->+ UTIL |
+            +--+--+       +-----+      +------+
+               ^
+               |      +--------+
+               +------+ CONFIG |
+                      +--------+
 ```
 
-This 4 layers enables the implementation to be entirely in the api/service layer that depends on the conversion from yaml to the struct.
+* `CMD`: CLI implementation using `Cobra`
+* `CONFIG`: Yaml configuration using `Viper`
+* `API`: Abstraction of services that implement capabilities
+* `UTIL`: Utility functions serving the API services
 
 ## Build
 
@@ -203,16 +241,16 @@ Removing intermediate container 44b3f771668a
 Successfully built 1715a2e68e3a
 Successfully tagged marcellodesales/cloner:19.11.1
 Distribution libraries for version 19.11.1
-docker run --rm -ti --entrypoint sh -v /Users/mdesales/dev/github.com/marcellodesales/cloner/dist:/bins marcellodesales/cloner:19.11.1 -c "cp /bin/cloner-darwin-amd64 /bins"
-docker run --rm -ti --entrypoint sh -v /Users/mdesales/dev/github.com/marcellodesales/cloner/dist:/bins marcellodesales/cloner:19.11.1 -c "cp /bin/cloner-linux-amd64 /bins"
-docker run --rm -ti --entrypoint sh -v /Users/mdesales/dev/github.com/marcellodesales/cloner/dist:/bins marcellodesales/cloner:19.11.1 -c "cp /bin/cloner-windows-amd64.exe /bins"
-ls -la /Users/mdesales/dev/github.com/marcellodesales/cloner/dist
+docker run --rm -ti --entrypoint sh -v /Users/marcellodesales/dev/github.com/marcellodesales/cloner/dist:/bins marcellodesales/cloner:19.11.1 -c "cp /bin/cloner-darwin-amd64 /bins"
+docker run --rm -ti --entrypoint sh -v /Users/marcellodesales/dev/github.com/marcellodesales/cloner/dist:/bins marcellodesales/cloner:19.11.1 -c "cp /bin/cloner-linux-amd64 /bins"
+docker run --rm -ti --entrypoint sh -v /Users/marcellodesales/dev/github.com/marcellodesales/cloner/dist:/bins marcellodesales/cloner:19.11.1 -c "cp /bin/cloner-windows-amd64.exe /bins"
+ls -la /Users/marcellodesales/dev/github.com/marcellodesales/cloner/dist
 total 73880
-drwxr-xr-x   5 mdesales  CORP\Domain Users       160 Nov 24 17:19 .
-drwxr-xr-x  19 mdesales  CORP\Domain Users       608 Nov 24 17:18 ..
--rwxr-xr-x   1 mdesales  CORP\Domain Users  12332944 Nov 24 17:19 cloner-darwin-amd64
--rwxr-xr-x   1 mdesales  CORP\Domain Users  12468409 Nov 24 17:19 cloner-linux-amd64
--rwxr-xr-x   1 mdesales  CORP\Domain Users  12219392 Nov 24 17:19 cloner-windows-amd64.exe
+drwxr-xr-x   5 marcellodesales  CORP\Domain Users       160 Nov 24 17:19 .
+drwxr-xr-x  19 marcellodesales  CORP\Domain Users       608 Nov 24 17:18 ..
+-rwxr-xr-x   1 marcellodesales  CORP\Domain Users  12332944 Nov 24 17:19 cloner-darwin-amd64
+-rwxr-xr-x   1 marcellodesales  CORP\Domain Users  12468409 Nov 24 17:19 cloner-linux-amd64
+-rwxr-xr-x   1 marcellodesales  CORP\Domain Users  12219392 Nov 24 17:19 cloner-windows-amd64.exe
 echo "Releasing next version 19.11.1"
 Releasing next version 19.11.1
 git tag v19.11.1 || true
@@ -226,7 +264,7 @@ Total 14 (delta 8), reused 0 (delta 0)
 remote: Resolving deltas: 100% (8/8), completed with 7 local objects.
 To github.com:marcellodesales/cloner.git
  * [new tag]         v19.11.1 -> v19.11.1
-docker run -ti -e GITHUB_HOST=github.com -e GITHUB_USER=marcellodesales  -e GITHUB_TOKEN=6100758b68072e0570ce0c250a6e398cadbeb326 -e GITHUB_REPOSITORY=marcellodesales/cloner -e HUB_PROTOCOL=https -v /Users/mdesales/dev/github.com/marcellodesales/cloner:/git marcellodesales/github-hub release create --prerelease --attach dist/cloner-darwin-amd64 --attach dist/cloner-linux-amd64 --attach dist/cloner-windows-amd64.exe -m "cloner 19.11.1 release" v19.11.1
+docker run -ti -e GITHUB_HOST=github.com -e GITHUB_USER=marcellodesales  -e GITHUB_TOKEN=6100758b68072e0570ce0c250a6e398cadbeb326 -e GITHUB_REPOSITORY=marcellodesales/cloner -e HUB_PROTOCOL=https -v /Users/marcellodesales/dev/github.com/marcellodesales/cloner:/git marcellodesales/github-hub release create --prerelease --attach dist/cloner-darwin-amd64 --attach dist/cloner-linux-amd64 --attach dist/cloner-windows-amd64.exe -m "cloner 19.11.1 release" v19.11.1
 Attaching release asset `dist/cloner-darwin-amd64'...
 Attaching release asset `dist/cloner-linux-amd64'...
 Attaching release asset `dist/cloner-windows-amd64.exe'...

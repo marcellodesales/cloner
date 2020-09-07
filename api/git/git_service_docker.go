@@ -45,11 +45,11 @@ func (service GitServiceType) VerifyCloneDir(gitRepoClone *GitRepoClone, forceCl
 }
 
 /**
- * Regular git
+ * Regular git clone execution using docker
  */
 func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone, config *config.Configuration) (string, error) {
 	// The location is provided by the api
-	var cloneLocation = service.GetOrgLocalPath(gitRepoClone, config)
+	var cloneLocation = gitRepoClone.CloneLocation
 
 	userHomeDir, _ := os.UserHomeDir()
 

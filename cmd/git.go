@@ -54,7 +54,7 @@ var initCmd = &cobra.Command{
 
 		log.Infof("Cloning the provided repo at '%s'", gitRepo.CloneLocation)
 
-		err = git.GitService.MakeOrgDir(gitRepo, config.INSTANCE)
+		err = git.GitService.MakeCloneDir(gitRepo, config.INSTANCE)
 		if err != nil {
 			log.Errorf("Can't create the base clone repo '%s': %v", gitRepo.Type.GetUserDir(), err)
 			os.Exit(4)
