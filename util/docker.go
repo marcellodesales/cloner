@@ -3,8 +3,6 @@ package util
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/thoas/go-funk"
-	"strings"
 )
 
 // Docker Executor struct to show
@@ -27,11 +25,6 @@ func NewDockerExecutor(command string, args []string) *DockerExecutor {
 	// https://stackoverflow.com/questions/12990338/cannot-convert-string-to-interface/12990540#12990540
 	// Convert the array of strings into array of interfaces
 	dockerArgs := formatCommandArguments(args)
-
-	// Add the env var to the docker run command when it's in debug mode
-	if IsLogInDebug() && funk.Contains(command, "--rm") {
-		command = strings.ReplaceAll(command, "--rm", "--rm -e PROTOCOOL_DEBUG=1")
-	}
 
 	// Create the instance of the executor
 	dockerExecutor := DockerExecutor{
@@ -64,7 +57,7 @@ func (dockerExecutor *DockerExecutor) Execute() (string, error) {
 	stdout, err := ShellExecute(dockerExecutor.RawCommand)
 	if err != nil {
 		// stdout has the value of the error
-		log.Debugf("Couldn't execute docker command: %v", stdout)
+		log.Debugf("Couldn't execute docker command: %v", err)
 		return stdout, err
 
 	} else {

@@ -64,11 +64,11 @@ func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone, config 
 	//	selectedRevision = gitRepoClone.Tag
 	//}
 
-	// Set the depth if it is set
+	// Set the depth if it is set to clone just how deep is provided
 	depthSetting := ""
-	if gitRepoClone.Depth > 0 {
-		depthSetting = fmt.Sprintf("--depth=%d ", gitRepoClone.Depth)
-	}
+	//if gitRepoClone.Depth > 0 {
+	//	depthSetting = fmt.Sprintf("--depth=%d ", gitRepoClone.Depth)
+	//}
 
 	dockerImage := config.Git.DockerImage
 	dockerCommandArgs := []string{userHomeDir, cloneLocation, dockerImage, depthSetting, gitRepoClone.Url}
@@ -91,12 +91,18 @@ func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone, config 
 /**
  * Show the tree of files generated
  */
-func (service GitServiceType) DockerFilesTree(gitRepoClone *GitRepoClone) (string, error) {
-	workingDir := service.GetRepoCloneDir(gitRepoClone)
+func (service GitServiceType) DockerFilesTree(gitRepoClone *GitRepoClone, config *config.Configuration) (string, error) {
+	workingDir := service.GetRepoLocalPath(gitRepoClone, config)
 	dockerCommandArgs := []string{workingDir, workingDir, workingDir}
 
 	// The docker command to be passed
 	dockerCommand := "docker container run --rm -v %s:%s iankoulski/tree %s"
+
+	// Just a single level at Info
+	if !util.IsLogInDebug() {
+		dockerCommand += " -L 1"
+	}
+
 	// Create a new Executor
 	dockerCommandExecutor := util.NewDockerExecutor(dockerCommand, dockerCommandArgs)
 

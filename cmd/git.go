@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"github.com/marcellodesales/cloner/api/git"
+	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,41 +28,51 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "git",
 	Short: "Clones a given git repo",
-	Long: `Clones a given github repo using the handler.`,
+	Long: `Clones a given git repo URL`,
 	Run: func(cmd *cobra.Command, args []string) {
+		log.Debugf("config.git.cloneBaseDir=%s", config.INSTANCE.Git.CloneBaseDir)
 		repo, _ := cmd.Flags().GetString("repo")
 		if repo == "" {
-			log.Errorf("You must provide the github repo clone URL")
+			log.Errorf("You must provide the repo URL")
 			os.Exit(1)
 		}
 		log.Debugf("Setting up for %s", repo)
 
 		gitRepo, err := git.GitService.ParseRepoString(repo)
 		if err != nil {
-			log.Errorf("Can't parse the Git Repo: %v", err)
+			log.Errorf("git URL invalid: %v", err)
 			os.Exit(2)
 		}
 
-		orgDir := git.GitService.GetRepoUserDir(gitRepo)
-		log.Infof("Cloning the provided repo at %s", orgDir)
-
-		err = git.GitService.MakeRepoUserDir(gitRepo)
+		forceClone, _ := cmd.Flags().GetBool("force")
+		err = git.GitService.VerifyCloneDir(gitRepo, forceClone, config.INSTANCE)
 		if err != nil {
-			log.Errorf("Can't create the base clone repo '%s': %v", gitRepo.Type.GetUserDir(), err)
+			log.Errorf("Can't clone repo: %v", err)
+			log.Errorf("You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!")
 			os.Exit(3)
 		}
 
-		cloneStdout, err := git.GitService.DockerGitClone(gitRepo)
+		log.Infof("Cloning the provided repo at '%s'", gitRepo.CloneLocation)
+
+		err = git.GitService.MakeOrgDir(gitRepo, config.INSTANCE)
 		if err != nil {
-			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), cloneStdout)
+			log.Errorf("Can't create the base clone repo '%s': %v", gitRepo.Type.GetUserDir(), err)
+			os.Exit(4)
+		}
+
+		_, err = git.GitService.DockerGitClone(gitRepo, config.INSTANCE)
+		if err != nil {
+			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
+			os.Exit(5)
+
 		} else {
-			log.Info("Finished cloning...")
+			log.Info("Done...")
 		}
 
 		// Show the files cloned
-		stdout, err := git.GitService.DockerFilesTree(gitRepo)
+		stdout, err := git.GitService.DockerFilesTree(gitRepo, config.INSTANCE)
 		if err != nil {
-			log.Errorf("Can't show the repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
+			log.Errorf("Can't show the cloned repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(4)
 		}
 
@@ -82,5 +93,7 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	initCmd.Flags().StringP("repo", "r", "", "The repo to clone")
+	initCmd.Flags().StringP("repo", "r", "", "The repo URL to clone")
+	var verbose = false
+	initCmd.Flags().BoolVarP(&verbose, "force", "f", false, "Forces cloning by deleting existing dir")
 }
