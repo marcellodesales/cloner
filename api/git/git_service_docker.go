@@ -64,11 +64,11 @@ func (service GitServiceType) DockerGitClone(gitRepoClone *GitRepoClone, config 
 	//	selectedRevision = gitRepoClone.Tag
 	//}
 
-	// Set the depth if it is set
+	// Set the depth if it is set to clone just how deep is provided
 	depthSetting := ""
-	if gitRepoClone.Depth > 0 {
-		depthSetting = fmt.Sprintf("--depth=%d ", gitRepoClone.Depth)
-	}
+	//if gitRepoClone.Depth > 0 {
+	//	depthSetting = fmt.Sprintf("--depth=%d ", gitRepoClone.Depth)
+	//}
 
 	dockerImage := config.Git.DockerImage
 	dockerCommandArgs := []string{userHomeDir, cloneLocation, dockerImage, depthSetting, gitRepoClone.Url}
