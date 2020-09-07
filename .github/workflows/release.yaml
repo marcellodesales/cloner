@@ -6,7 +6,8 @@ on:
       - master
 
 jobs:
-  build:
+  release:
+    name: Makes a Github Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -16,5 +17,5 @@ jobs:
       - name: Makefile + Dockerfile dockerized release
         env:
           TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
-        run: make build
+        run: make release
 
