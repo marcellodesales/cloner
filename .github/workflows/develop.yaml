@@ -7,14 +7,78 @@ on:
 
 jobs:
   build:
+    name: Build CLI Binaries
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
         with:
           fetch-depth: 1
 
-      - name: Makefile local golang build
+      - name: Golang build
         run: make local
 
-      - name: Makefile + Dockerfile docker build
+      - name: Dockerized Cross-compile Build
         run: make build
+
+      # Produces the binaries at the directory ./dist
+      - name: Dockerized Binary Distribution
+        run: make dist
+
+      # https://docs.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts#passing-data-between-jobs-in-a-workflow
+      - name: Upload MacOS Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner-darwin-amd64
+          path: dist/cloner-darwin-amd64
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner-linux-amd64
+          path: dist/cloner-linux-amd64
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner-windows-amd64.exe
+          path: dist/cloner-windows-amd64.exe
+
+  # https://github.com/nightlark/ninja/blob/f1a33131154ae7d9648aa82afac462859535fb62/.github/workflows/release-ninja-binaries.yml#L8-L34
+  verify:
+    name: Verify CLI Binaries
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            bin_name: cloner-linux-amd64
+          - os: macOS-latest
+            bin_name: cloner-darwin-amd64
+          - os: windows-latest
+            bin_name: cloner-windows-amd64.exe
+    steps:
+      - name: Download math result for job 1
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.bin_name }}
+
+      # Install OS specific dependencies
+      - name: Unix Binary Validation
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+        env:
+          BIN_NAME: ${{ matrix.bin_name }}
+        run: |
+          ls -la ./${BIN_NAME}
+          chmod +x ./${BIN_NAME}
+          ./${BIN_NAME}
+
+      - name: Install Windows dependencies
+        if: matrix.os == 'windows-latest'
+        env:
+          BIN_NAME: ${{ matrix.bin_name }}
+        run: |
+          dir
+          echo $pwd\$env:BIN_NAME
+          start-process -nonewwindow $pwd\$env:BIN_NAME
