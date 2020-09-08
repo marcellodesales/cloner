@@ -17,6 +17,6 @@ jobs:
 
       - name: Makefile + Dockerfile dockerized release
         env:
-          TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
+          PUBLISH_GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
         run: make release
 
