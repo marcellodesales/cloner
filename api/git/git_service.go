@@ -17,6 +17,8 @@ package git
 
 import (
 	"errors"
+	"fmt"
+	"github.com/go-git/go-git/v5"
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 	"os"
@@ -78,6 +80,26 @@ func (service GitServiceType) GetOrgLocalPath(gitRepoClone *GitRepoClone, config
 	return path.Join(config.Git.CloneBaseDir, gitRepoClone.Type.GetUserDir())
 }
 
+func (service GitServiceType) VerifyCloneDir(gitRepoClone *GitRepoClone, forceClone bool, config *config.Configuration) (bool, error) {
+	// The location is provided by the api
+	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
+	//log.Debugf("Verifying if the clone path '%s' exists or exists and is empty", gitRepoClone.CloneLocation)
+
+	if util.DirExists(gitRepoClone.CloneLocation) {
+		if forceClone {
+			util.DeleteDir(gitRepoClone.CloneLocation)
+			return true, nil
+		}
+
+		// Verify if the user repo is not empty
+		dirIsEmpty, _ := util.IsDirEmpty(gitRepoClone.CloneLocation)
+		if !dirIsEmpty {
+			return false, errors.New(fmt.Sprintf("clone location '%s' exists and it's not empty", gitRepoClone.CloneLocation))
+		}
+	}
+	return false, nil
+}
+
 /**
  * Makes the base clone dir is the org and parts of the repo dir since the clone service creates the repo dir
  */
@@ -92,11 +114,34 @@ func (service GitServiceType) MakeCloneDir(gitRepoClone *GitRepoClone, config *c
 		}
 	}
 
-	gitRepoClone.CloneLocation = baseCloneDir
-
 	err := os.MkdirAll(gitRepoClone.CloneLocation, 0755)
 	if err != nil {
 		return err
 	}
+
+	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
 	return nil
+}
+
+/**
+ * Clone the git repo to the clone location using go-git
+ */
+func (service GitServiceType) GoCloneRepo(gitRepoClone *GitRepoClone, config *config.Configuration) error {
+	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
+
+	// https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-go-git
+	_, err := git.PlainClone(gitRepoClone.CloneLocation, false, &git.CloneOptions{
+		URL: gitRepoClone.Url,
+		Progress: os.Stdout,
+	})
+	return err
+}
+
+/**
+ * Print the list of the files in the dir just like the "tree" unix command
+ */
+func (service GitServiceType) GoPrintTree(gitRepoClone *GitRepoClone) (string, error) {
+	// Exclude the .git dir from the list
+	excludedList := []string{".git"}
+	return util.GetDirTree(gitRepoClone.CloneLocation, excludedList)
 }
