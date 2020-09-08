@@ -18,6 +18,7 @@ package git
 import (
 	"errors"
 	"fmt"
+	"github.com/go-git/go-git/v5"
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 	"os"
@@ -113,11 +114,25 @@ func (service GitServiceType) MakeCloneDir(gitRepoClone *GitRepoClone, config *c
 		}
 	}
 
-	gitRepoClone.CloneLocation = baseCloneDir
-
 	err := os.MkdirAll(gitRepoClone.CloneLocation, 0755)
 	if err != nil {
 		return err
 	}
+
+	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
 	return nil
+}
+
+/**
+ * Clone the git repo to the clone location using go-git
+ */
+func (service GitServiceType) GoCloneRepo(gitRepoClone *GitRepoClone, config *config.Configuration) error {
+	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
+
+	// https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-go-git
+	_, err := git.PlainClone(gitRepoClone.CloneLocation, false, &git.CloneOptions{
+		URL: gitRepoClone.Url,
+		Progress: os.Stdout,
+	})
+	return err
 }

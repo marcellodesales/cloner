@@ -60,15 +60,14 @@ var initCmd = &cobra.Command{
 			os.Exit(3)
 		}
 
-		log.Infof("Cloning the provided repo at '%s'", gitRepo.CloneLocation)
-
 		err = git.GitService.MakeCloneDir(gitRepo, config.INSTANCE)
 		if err != nil {
 			log.Errorf("Can't create the base clone repo '%s': %v", gitRepo.Type.GetUserDir(), err)
 			os.Exit(4)
 		}
 
-		_, err = git.GitService.DockerGitClone(gitRepo, config.INSTANCE)
+		log.Infof("Cloning into '%s'", gitRepo.CloneLocation)
+		err = git.GitService.GoCloneRepo(gitRepo, config.INSTANCE)
 		if err != nil {
 			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(5)
