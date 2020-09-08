@@ -40,13 +40,13 @@ func initConfig() (*Configuration, error) {
 	//  ############# Initialize the init config
 	git, err := parseGitConfig()
 	if err != nil {
-		return nil, fmt.Errorf("config: Can't parse init config: %g", err)
+		return nil, fmt.Errorf("config: Can't parse init config: %v", err)
 	}
 
 	// Validate
 	err = validateInitConfig(git)
 	if err != nil {
-		log.Error("Can't init because of config errors: %v", err)
+		log.Errorf("Can't init because of config errors: %v", err)
 	}
 
 	config.Git = *git

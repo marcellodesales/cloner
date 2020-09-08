@@ -1,7 +1,6 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 )
@@ -10,7 +9,7 @@ func RegexProcessString(regex *regexp.Regexp, str string) (map[string]string, er
 	// Verify the match first
 	match := regex.FindStringSubmatch(str)
 	if match == nil {
-		return nil, errors.New(fmt.Sprintf("The regex '%s' did not find any match on the given string '%s'", regex, str))
+		return nil, fmt.Errorf("regex '%s' did not find any match on the given string '%s'", regex, str)
 	}
 
 	// Construct a map with the key-value pairs
@@ -22,7 +21,7 @@ func RegexProcessString(regex *regexp.Regexp, str string) (map[string]string, er
 	}
 
 	if len(result) == 0 {
-		return nil, errors.New(fmt.Sprintf("The regex '%s' did not find any match on the given string '%s'", regex, str))
+		return nil, fmt.Errorf("regex '%s' did not find any match on the given string '%s'", regex, str)
 
 	} else {
 		return result, nil
