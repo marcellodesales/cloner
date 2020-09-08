@@ -79,24 +79,24 @@ func (service GitServiceType) GetOrgLocalPath(gitRepoClone *GitRepoClone, config
 	return path.Join(config.Git.CloneBaseDir, gitRepoClone.Type.GetUserDir())
 }
 
-func (service GitServiceType) VerifyCloneDir(gitRepoClone *GitRepoClone, forceClone bool, config *config.Configuration) error {
+func (service GitServiceType) VerifyCloneDir(gitRepoClone *GitRepoClone, forceClone bool, config *config.Configuration) (bool, error) {
 	// The location is provided by the api
 	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
-	log.Debugf("Verifying if the clone path '%s' exists or exists and is empty", gitRepoClone.CloneLocation)
+	//log.Debugf("Verifying if the clone path '%s' exists or exists and is empty", gitRepoClone.CloneLocation)
 
 	if util.DirExists(gitRepoClone.CloneLocation) {
 		if forceClone {
 			util.DeleteDir(gitRepoClone.CloneLocation)
-			return nil
+			return true, nil
 		}
 
 		// Verify if the user repo is not empty
 		dirIsEmpty, _ := util.IsDirEmpty(gitRepoClone.CloneLocation)
 		if !dirIsEmpty {
-			return errors.New(fmt.Sprintf("clone location '%s' exists and it's not empty", gitRepoClone.CloneLocation))
+			return false, errors.New(fmt.Sprintf("clone location '%s' exists and it's not empty", gitRepoClone.CloneLocation))
 		}
 	}
-	return nil
+	return false, nil
 }
 
 /**

@@ -45,10 +45,18 @@ var initCmd = &cobra.Command{
 		}
 
 		forceClone, _ := cmd.Flags().GetBool("force")
-		err = git.GitService.VerifyCloneDir(gitRepo, forceClone, config.INSTANCE)
+		if forceClone {
+			log.Info("Forcing clone...")
+		}
+
+		deletedExistingDir, err := git.GitService.VerifyCloneDir(gitRepo, forceClone, config.INSTANCE)
+		if deletedExistingDir {
+			log.Infof("Deleted dir '%s'", gitRepo.CloneLocation)
+		}
 		if err != nil {
 			log.Errorf("Can't clone repo: %v", err)
-			log.Errorf("You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!")
+			log.Errorf("You can specify --force or -f to delete the existing dir and clone again. " +
+				"Make sure there are no panding changes!")
 			os.Exit(3)
 		}
 
