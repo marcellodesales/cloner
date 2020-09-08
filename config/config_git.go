@@ -27,9 +27,6 @@ import (
  * https://godoc.org/github.com/mitchellh/mapstructure
  */
 type Git struct {
-	// The name of the protos used by the generated Stubs
-	DockerImage string `mapstructure:"dockerImage"`
-
 	CloneBaseDir string `mapstructure:"cloneBaseDir"`
 
 	// The list of plugins to initialize
@@ -55,9 +52,6 @@ func parseGitConfig() (*Git, error) {
 }
 
 func setDefaultCliValues(git *Git) {
-	if git.DockerImage == "" {
-		git.DockerImage = "alpine/git"
-	}
 	homeDir, _ := os.UserHomeDir()
 	if git.CloneBaseDir == "" {
 		git.CloneBaseDir = path.Join(homeDir, "cloner")
@@ -72,10 +66,6 @@ func setDefaultCliValues(git *Git) {
  * Validate the initialization
  */
 func validateInitConfig(git *Git) error {
-	if git.DockerImage == "" {
-		git.DockerImage = "alpine/git"
-		return nil
-	}
 	if git.CloneBaseDir == "" {
 		return errors.New("you must provide the clone base dir")
 	}

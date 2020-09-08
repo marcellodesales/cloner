@@ -45,14 +45,20 @@ var initCmd = &cobra.Command{
 		}
 
 		forceClone, _ := cmd.Flags().GetBool("force")
-		err = git.GitService.VerifyCloneDir(gitRepo, forceClone, config.INSTANCE)
-		if err != nil {
-			log.Errorf("Can't clone repo: %v", err)
-			log.Errorf("You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!")
-			os.Exit(3)
+		if forceClone {
+			log.Info("Forcing clone...")
 		}
 
-		log.Infof("Cloning the provided repo at '%s'", gitRepo.CloneLocation)
+		deletedExistingDir, err := git.GitService.VerifyCloneDir(gitRepo, forceClone, config.INSTANCE)
+		if deletedExistingDir {
+			log.Infof("Deleted dir '%s'", gitRepo.CloneLocation)
+		}
+		if err != nil {
+			log.Errorf("Can't clone repo: %v", err)
+			log.Errorf("You can specify --force or -f to delete the existing dir and clone again. " +
+				"Make sure there are no panding changes!")
+			os.Exit(3)
+		}
 
 		err = git.GitService.MakeCloneDir(gitRepo, config.INSTANCE)
 		if err != nil {
@@ -60,7 +66,8 @@ var initCmd = &cobra.Command{
 			os.Exit(4)
 		}
 
-		_, err = git.GitService.DockerGitClone(gitRepo, config.INSTANCE)
+		log.Infof("Cloning into '%s'", gitRepo.CloneLocation)
+		err = git.GitService.GoCloneRepo(gitRepo, config.INSTANCE)
 		if err != nil {
 			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(5)
@@ -70,14 +77,14 @@ var initCmd = &cobra.Command{
 		}
 
 		// Show the files cloned
-		stdout, err := git.GitService.DockerFilesTree(gitRepo, config.INSTANCE)
+		filesListTree, err := git.GitService.GoPrintTree(gitRepo)
 		if err != nil {
 			log.Errorf("Can't show the cloned repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(4)
 		}
 
-		if !util.IsLogInDebug() {
-			log.Infof("\n%s", stdout)
+		if util.IsLogInDebug() {
+			log.Infof("\n%s", filesListTree)
 		}
 	},
 }
