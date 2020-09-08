@@ -77,14 +77,14 @@ var initCmd = &cobra.Command{
 		}
 
 		// Show the files cloned
-		stdout, err := git.GitService.DockerFilesTree(gitRepo, config.INSTANCE)
+		filesListTree, err := git.GitService.GoPrintTree(gitRepo)
 		if err != nil {
 			log.Errorf("Can't show the cloned repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
 			os.Exit(4)
 		}
 
-		if !util.IsLogInDebug() {
-			log.Infof("\n%s", stdout)
+		if util.IsLogInDebug() {
+			log.Infof("\n%s", filesListTree)
 		}
 	},
 }

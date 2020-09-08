@@ -136,3 +136,12 @@ func (service GitServiceType) GoCloneRepo(gitRepoClone *GitRepoClone, config *co
 	})
 	return err
 }
+
+/**
+ * Print the list of the files in the dir just like the "tree" unix command
+ */
+func (service GitServiceType) GoPrintTree(gitRepoClone *GitRepoClone) (string, error) {
+	// Exclude the .git dir from the list
+	excludedList := []string{".git"}
+	return util.GetDirTree(gitRepoClone.CloneLocation, excludedList)
+}
