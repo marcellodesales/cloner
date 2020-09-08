@@ -46,31 +46,32 @@ When the CLI runs, it will create the dirs `git.cloneBaseDir/git.host/git.org/gi
 
 # Running
 
-```console
+```go
 $ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
-INFO[2020-09-07T16:16:12-03:00] Cloning the provided repo at '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
-INFO[2020-09-07T16:16:15-03:00] Finished cloning...
-INFO[2020-09-07T16:16:16-03:00]
-/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana
-├── Dockerfile
-├── LICENSE
-├── README.md
-├── docker-compose-redis-standalone-grafana.yml
-├── docker-compose-redis-standalone.yml
-├── grafana
-├── img
-├── mvnw
-├── mvnw.cmd
-├── pom.xml
-└── src
+INFO[2020-09-08T12:28:11-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
+Enumerating objects: 233, done.
+Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
+INFO[2020-09-08T12:28:18-03:00] Done...
 
-3 directories, 8 files
+$ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
+ERRO[2020-09-08T12:29:58-03:00] Can't clone repo: clone location '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana' exists and it's not empty
+ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!
+
+$ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana -f
+INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
+INFO[2020-09-08T12:30:42-03:00] Forcing clone...
+INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
+INFO[2020-09-08T12:30:42-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
+Enumerating objects: 233, done.
+Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
+INFO[2020-09-08T12:28:18-03:00] Done...
 ```
 
 # Development
 
-* Using Golang and Docker to implement the CLI.
+* Here's how we are doing it!
 
 ## Design
 
@@ -91,9 +92,9 @@ main +----->+ CMD +------>+ API +----->+ UTIL |
 * `API`: Abstraction of services that implement capabilities
 * `UTIL`: Utility functions serving the API services
 
-## Build
+## Binaries
 
-You can use Golang locally to build a local executable as follows (MacOS)
+You can use Golang locally to build a local executable as follows (MacOS). The Github Actions CI [build-develop](https://github.com/marcellodesales/cloner/actions?query=workflow%3Abuild-develop) implements the steps below, publishing binary artifacts at every commit under the `develop` branch.
 
 ```console
 $ make local
@@ -101,7 +102,7 @@ $ make local
 
 * The local build will be available at `dist/cloner-darwin-local`
 
-In order to run the CLI:
+Other binary versions are available at the `Artifacts` section of the `build-develop` Github Actions. If you want to build locally, here's what you need to do:
 
 > Requirement: install the following:
 > * `docker`
@@ -123,9 +124,31 @@ The CLI will print the help
 $ ./dist/cloner-darwin-amd64
 ```
 
-# Releases
+## Bug Reports & Feature Requests
 
-Requires `make` and `docker` to build as the build is dockerized for Golang.
+Please use the [issue tracker](https://github.com/marcellodesales/cloner/issues) to report any bugs or file feature requests.
+
+## Social Coding and Contributing
+
+1. Create an issue to discuss about your idea
+2. [Fork it] (https://github.com/marcellodesales/cloner/fork)
+3. Create your feature branch (`git checkout -b feature/my-new-feature`)
+4. Commit your changes (`git commit -am 'feature x: Add some capability'`)
+5. Push to the branch (`git push origin feature/my-new-feature`)
+6. Create a new Pull Request
+7. Profit! :white_check_mark:
+
+Our Gitflow is as follows:
+
+* `develop`: CI that runs all builds and generate binaries.
+  * Target your PR here.
+* `master`: CD that creates a new release based on a TAG
+  * Performed from PRs from `develop`
+  * Publishes latest binary version from `develop`
+
+## Releases
+
+Requires `make` and `docker` for a dockerized build and cross-compilation for Golang. We can run the same exact script on local host or in a CI environemtn. See our Github Action `release-master`, which runs at every PR merge to the `master` branch.  
 
 > ATTENTION: Make sure to have a Github token with write permissions to the repo
 >  * https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
@@ -269,4 +292,30 @@ Attaching release asset `dist/cloner-darwin-amd64'...
 Attaching release asset `dist/cloner-linux-amd64'...
 Attaching release asset `dist/cloner-windows-amd64.exe'...
 https://github.com/marcellodesales/cloner/releases/tag/v19.11.1
+```
+
+## License
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2019-2020 Marcello de Sales
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 ```

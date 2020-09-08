@@ -71,14 +71,3 @@ func validateInitConfig(git *Git) error {
 	}
 	return nil
 }
-
-/**
- * Whether the dependencies contain locked resources
- */
-func (init *Git) getPropertyNames() []string {
-	var keys []string
-	for k := range init.Properties {
-		keys = append(keys, k)
-	}
-	return keys
-}

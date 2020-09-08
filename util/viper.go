@@ -18,8 +18,8 @@ func SetupViperHomeConfig(configFile, configName, extension, envPrefix string) {
 
 	// https://github.com/spf13/viper/issues/390#issuecomment-336464039
 	// the name of the config file
-	if string(configFile[0]) != "." {
-		configFile = "." + configFile
+	if string(configName[0]) != "." {
+		configName = "." + configName
 	}
 	viper.SetConfigName(configName)
 

@@ -18,16 +18,17 @@ package git
 import (
 	"errors"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/marcellodesales/cloner/config"
-	"github.com/marcellodesales/cloner/util"
 	"os"
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/marcellodesales/cloner/config"
+	"github.com/marcellodesales/cloner/util"
 )
 
-type GitServiceType struct {}
+type GitServiceType struct{}
 
 var GitService GitServiceType
 
@@ -53,13 +54,13 @@ func (service GitServiceType) ParseRepoString(repo string) (*GitRepoClone, error
 
 	gitRepoInstance := GitRepoType{
 		Protocol: gitRepoValues["protocol"],
-		Host: gitRepoValues["host"],
-		User: gitRepoValues["user"],
-		Repo: gitRepoValues["repo"], // may contain "/" when in repo is in gitlab folders format
+		Host:     gitRepoValues["host"],
+		User:     gitRepoValues["user"],
+		Repo:     gitRepoValues["repo"], // may contain "/" when in repo is in gitlab folders format
 	}
 
 	gitRepoClone := &GitRepoClone{
-		Url: repo,
+		Url:  repo,
 		Type: gitRepoInstance,
 	}
 
@@ -87,14 +88,17 @@ func (service GitServiceType) VerifyCloneDir(gitRepoClone *GitRepoClone, forceCl
 
 	if util.DirExists(gitRepoClone.CloneLocation) {
 		if forceClone {
-			util.DeleteDir(gitRepoClone.CloneLocation)
+			err := util.DeleteDir(gitRepoClone.CloneLocation)
+			if err != nil {
+				return false, fmt.Errorf("can't force deletion of dir '%s': %v", gitRepoClone.CloneLocation, err)
+			}
 			return true, nil
 		}
 
 		// Verify if the user repo is not empty
 		dirIsEmpty, _ := util.IsDirEmpty(gitRepoClone.CloneLocation)
 		if !dirIsEmpty {
-			return false, errors.New(fmt.Sprintf("clone location '%s' exists and it's not empty", gitRepoClone.CloneLocation))
+			return false, fmt.Errorf("clone location '%s' exists and it's not empty", gitRepoClone.CloneLocation)
 		}
 	}
 	return false, nil
@@ -109,7 +113,7 @@ func (service GitServiceType) MakeCloneDir(gitRepoClone *GitRepoClone, config *c
 	// For gitlab and other hosts with more than a single folder
 	if strings.Contains(gitRepoClone.Type.Repo, "/") {
 		split := strings.Split(gitRepoClone.Type.Repo, "/")
-		for i := 0; i <= len(split) - 2; i++ {
+		for i := 0; i <= len(split)-2; i++ {
 			baseCloneDir += "/" + split[i]
 		}
 	}
@@ -131,7 +135,7 @@ func (service GitServiceType) GoCloneRepo(gitRepoClone *GitRepoClone, config *co
 
 	// https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-go-git
 	_, err := git.PlainClone(gitRepoClone.CloneLocation, false, &git.CloneOptions{
-		URL: gitRepoClone.Url,
+		URL:      gitRepoClone.Url,
 		Progress: os.Stdout,
 	})
 	return err
