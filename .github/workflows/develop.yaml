@@ -59,7 +59,7 @@ jobs:
           - os: windows-latest
             bin_name: cloner-windows-amd64.exe
     steps:
-      - name: Download math result for job 1
+      - name: Download artifact ${{ matrix.bin_name }} from build
         uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.bin_name }}
@@ -72,10 +72,10 @@ jobs:
         run: |
           ls -la ./${BIN_NAME}
           chmod +x ./${BIN_NAME}
-          info ./${BIN_NAME}
+          file ./${BIN_NAME}
           ./${BIN_NAME}
 
-      - name: Install Windows dependencies
+      - name: Windows Binary Validation
         if: matrix.os == 'windows-latest'
         env:
           BIN_NAME: ${{ matrix.bin_name }}
