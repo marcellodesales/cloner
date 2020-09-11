@@ -1,6 +1,6 @@
 module github.com/marcellodesales/cloner
 
-go 1.13
+go 1.15
 
 require (
 	github.com/disiqueira/gotree v1.0.0
