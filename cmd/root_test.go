@@ -24,6 +24,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+/**
+ * Testing root and setup methods
+ * https://stackoverflow.com/questions/23729790/how-can-i-do-test-setup-using-the-testing-package-in-go/34102842#34102842
+ */
 func TestMain(m *testing.M) {
 	setup()
 	code := m.Run()
