@@ -25,11 +25,11 @@ import (
  * Testing Golang CLI
  * https://stackoverflow.com/questions/59709345/how-to-implement-unit-tests-for-cli-commands-in-go/59714127#59714127
  */
-func TestExecuteGitClone(t *testing.T) {
+func TestGitCloneWithWrongURLs(t *testing.T) {
 
 	// https://github.com/smartystreets/goconvey/wiki#your-first-goconvey-test
 	// Only pass t into top-level Convey calls
-	Convey("Given empty URL to clone", t, func() {
+	Convey("Given an empty URL to clone", t, func() {
 		url := ""
 		forceClone := false
 		exitCode, errors := executeGitClone(url, forceClone)
@@ -37,9 +37,26 @@ func TestExecuteGitClone(t *testing.T) {
 		Convey("The exit code should be 1", func() {
 			So(exitCode, ShouldEqual, 1)
 		})
-		Convey("The list of errors must be 1", func() {
+		Convey("With 1 error message", func() {
 			So(len(errors), ShouldEqual, 1)
 			So(errors[0].Error(), ShouldEqual, "git URL invalid: you must provide the repo URL")
+		})
+	})
+
+	// https://github.com/smartystreets/goconvey/wiki#your-first-goconvey-test
+	// Only pass t into top-level Convey calls
+	Convey("Given an invalid git URL to clone", t, func() {
+		url := "abc-not-url"
+		forceClone := false
+		exitCode, errors := executeGitClone(url, forceClone)
+
+		Convey("The exit code should be 1", func() {
+			So(exitCode, ShouldEqual, 1)
+		})
+		Convey("With 1 error message", func() {
+			So(len(errors), ShouldEqual, 1)
+			So(errors[0].Error(), ShouldContainSubstring, "git URL invalid:")
+			So(errors[0].Error(), ShouldContainSubstring, url)
 		})
 	})
 
