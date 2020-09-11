@@ -16,77 +16,47 @@ limitations under the License.
 package cmd
 
 import (
+	"os"
+
 	"github.com/marcellodesales/cloner/api/git"
 	"github.com/marcellodesales/cloner/config"
-	"github.com/marcellodesales/cloner/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "git",
 	Short: "Clones a given git repo",
-	Long: `Clones a given git repo URL`,
-	Run: func(cmd *cobra.Command, args []string) {
-		log.Debugf("config.git.cloneBaseDir=%s", config.INSTANCE.Git.CloneBaseDir)
-		repo, _ := cmd.Flags().GetString("repo")
-		if repo == "" {
-			log.Errorf("You must provide the repo URL")
-			os.Exit(1)
-		}
-		log.Debugf("Setting up for %s", repo)
+	Long:  `Clones a given git repo URL`,
+	Run:   GitCloneCmd,
+}
 
-		gitRepo, err := git.GitService.ParseRepoString(repo)
-		if err != nil {
-			log.Errorf("git URL invalid: %v", err)
-			os.Exit(2)
-		}
+// Exposed command for testing
+func GitCloneCmd(cmd *cobra.Command, args []string) {
+	log.Debugf("config.git.cloneBaseDir=%s", config.INSTANCE.Git.CloneBaseDir)
+	repo, _ := cmd.Flags().GetString("repo")
+	forceClone, _ := cmd.Flags().GetBool("force")
 
-		forceClone, _ := cmd.Flags().GetBool("force")
-		if forceClone {
-			log.Info("Forcing clone...")
-		}
+	exitCode, errors := executeGitClone(repo, forceClone)
 
-		deletedExistingDir, err := git.GitService.VerifyCloneDir(gitRepo, forceClone, config.INSTANCE)
-		if deletedExistingDir {
-			log.Infof("Deleted dir '%s'", gitRepo.CloneLocation)
+	// Show any errors if any
+	if len(errors) > 0 {
+		for _, error := range errors {
+			log.Error(error)
 		}
-		if err != nil {
-			log.Errorf("Can't clone repo: %v", err)
-			log.Errorf("You can specify --force or -f to delete the existing dir and clone again. " +
-				"Make sure there are no panding changes!")
-			os.Exit(3)
-		}
+	}
 
-		err = git.GitService.MakeCloneDir(gitRepo, config.INSTANCE)
-		if err != nil {
-			log.Errorf("Can't create the base clone repo '%s': %v", gitRepo.Type.GetUserDir(), err)
-			os.Exit(4)
-		}
+	// Exit as part of the CLI contract
+	os.Exit(exitCode)
+}
 
-		log.Infof("Cloning into '%s'", gitRepo.CloneLocation)
-		err = git.GitService.GoCloneRepo(gitRepo, config.INSTANCE)
-		if err != nil {
-			log.Errorf("Can't clone the repo at '%s': %v", gitRepo.Type.GetRepoDir(), err)
-			os.Exit(5)
+func executeGitClone(repo string, forceClone bool) (int, []error) {
+	// Make a clone repo request based on the input from the CLI
+	cloneRepoRequest := git.GitService.Init(repo, forceClone)
 
-		} else {
-			log.Info("Done...")
-		}
-
-		// Show the files cloned
-		filesListTree, err := git.GitService.GoPrintTree(gitRepo)
-		if err != nil {
-			log.Errorf("Can't show the cloned repo tree '%s': %v", gitRepo.Type.GetRepoDir(), err)
-			os.Exit(4)
-		}
-
-		if util.IsLogInDebug() {
-			log.Infof("\n%s", filesListTree)
-		}
-	},
+	// Execute the implementation, getting the exit code and any error
+	return git.CloneGitRepo(cloneRepoRequest, config.INSTANCE)
 }
 
 func init() {
