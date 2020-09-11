@@ -33,8 +33,8 @@ var initCmd = &cobra.Command{
 }
 
 // Exposed command for testing
+// https://stackoverflow.com/questions/59709345/how-to-implement-unit-tests-for-cli-commands-in-go/59714127#59714127
 func GitCloneCmd(cmd *cobra.Command, args []string) {
-	log.Debugf("config.git.cloneBaseDir=%s", config.INSTANCE.Git.CloneBaseDir)
 	repo, _ := cmd.Flags().GetString("repo")
 	forceClone, _ := cmd.Flags().GetBool("force")
 
