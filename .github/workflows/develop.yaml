@@ -8,6 +8,17 @@ on:
       - feature/**
 
 jobs:
+  test:
+    name: Run Test Cases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+
+      - name: Golang test
+        run: make test
+
   build:
     name: Build CLI Binaries
     runs-on: ubuntu-latest

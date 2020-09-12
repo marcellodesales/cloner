@@ -17,8 +17,6 @@ package cmd
 
 import (
 	"testing"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 /**
@@ -27,37 +25,51 @@ import (
  */
 func TestGitCloneWithWrongURLs(t *testing.T) {
 
-	// https://github.com/smartystreets/goconvey/wiki#your-first-goconvey-test
-	// Only pass t into top-level Convey calls
-	Convey("Given an empty URL to clone", t, func() {
-		url := ""
-		forceClone := false
-		exitCode, errors := executeGitClone(url, forceClone)
+	wrongUrlTests := []CliTests{
+		{
+			title:              "Given an empty URL to clone",
+			input:              TestInput{url: "", forceClone: false},
+			exitCode:           1,
+			exactErrorMessages: map[string]bool{"git URL invalid: you must provide the repo URL": true},
+		},
+		{
+			title:                "Given an invalid git URL to clone",
+			input:                TestInput{url: "incorrect-url", forceClone: false},
+			exitCode:             1,
+			errorMessageContains: []string{"git URL invalid:", "did not find any match", "incorrect-url"},
+		},
+	}
 
-		Convey("The exit code should be 1", func() {
-			So(exitCode, ShouldEqual, 1)
-		})
-		Convey("With 1 error message", func() {
-			So(len(errors), ShouldEqual, 1)
-			So(errors[0].Error(), ShouldEqual, "git URL invalid: you must provide the repo URL")
-		})
-	})
+	// Execute the test cases
+	ExecuteCliTestsStrategy(t, wrongUrlTests)
+}
 
-	// https://github.com/smartystreets/goconvey/wiki#your-first-goconvey-test
-	// Only pass t into top-level Convey calls
-	Convey("Given an invalid git URL to clone", t, func() {
-		url := "abc-not-url"
-		forceClone := false
-		exitCode, errors := executeGitClone(url, forceClone)
+func TestGitCloneSuccessfullyForcing(t *testing.T) {
+	existingDirTests := []CliTests{
+		{
+			title: "Given existing cloned repo",
+			input: TestInput{
+				url:        "https://github.com/comsysto/redis-locks-with-grafana",
+				forceClone: true},
+			exitCode: 0,
+		},
+	}
 
-		Convey("The exit code should be 1", func() {
-			So(exitCode, ShouldEqual, 1)
-		})
-		Convey("With 1 error message", func() {
-			So(len(errors), ShouldEqual, 1)
-			So(errors[0].Error(), ShouldContainSubstring, "git URL invalid:")
-			So(errors[0].Error(), ShouldContainSubstring, url)
-		})
-	})
+	// Execute the test cases
+	ExecuteCliTestsStrategy(t, existingDirTests)
+}
 
+func TestGitCloneExistingDirs(t *testing.T) {
+
+	existingDirTests := []CliTests{
+		{
+			title:                "Given existing cloned repo",
+			input:                TestInput{url: "https://github.com/comsysto/redis-locks-with-grafana", forceClone: false},
+			exitCode:             2,
+			errorMessageContains: []string{"can't clone repo: clone location", "exists and it's not empty"},
+		},
+	}
+
+	// Execute the test cases
+	ExecuteCliTestsStrategy(t, existingDirTests)
 }
