@@ -92,6 +92,15 @@ main +----->+ CMD +------>+ API +----->+ UTIL |
 * `API`: Abstraction of services that implement capabilities
 * `UTIL`: Utility functions serving the API services
 
+## Tests
+
+* Look at the scenarios of the CLI in the tests
+  * Tests at `cmd/git_test.go`
+
+```shell
+make test
+```
+
 ## Binaries
 
 You can use Golang locally to build a local executable as follows (MacOS). The Github Actions CI [build-develop](https://github.com/marcellodesales/cloner/actions?query=workflow%3Abuild-develop) implements the steps below, publishing binary artifacts at every commit under the `develop` branch.
