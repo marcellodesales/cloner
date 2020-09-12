@@ -17,17 +17,18 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var cfgFile string
 
 //The verbose flag value
-var v string
+var logVerbosity string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -55,7 +56,8 @@ func init() {
 	// will be global for your application.
 
 	// Setup Viper Configuration file type
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "cloner", "cloner", "Config file (default is $HOME/.cloner.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "cloner", "cloner",
+		"Config file (default is $HOME/.cloner.yaml)")
 
 	// Callbacks to initilize, in order, for cobra-viper-anything else
 	cobra.OnInitialize(
@@ -71,7 +73,7 @@ func init() {
 
 	// Setup Logger https://le-gall.bzh/post/go/integrating-logrus-with-cobra/
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		if err := util.SetUpLogs(os.Stdout, v); err != nil {
+		if err := util.SetUpLogs(os.Stdout, logVerbosity); err != nil {
 			return err
 		}
 		return nil
@@ -79,7 +81,8 @@ func init() {
 
 	//Here is where we bind the verbose flag
 	//Default value is the info level
-	rootCmd.PersistentFlags().StringVarP(&v, "verbosity", "v", logrus.InfoLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
+	rootCmd.PersistentFlags().StringVarP(&logVerbosity, "verbosity", "v", logrus.InfoLevel.String(),
+		"Log level (debug, info, warn, error, fatal, panic")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

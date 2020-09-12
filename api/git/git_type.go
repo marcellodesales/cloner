@@ -21,20 +21,21 @@ import (
 
 type GitRepoType struct {
 	Protocol string
-	Host string
-	User string
-	Repo string
+	Host     string
+	User     string
+	Repo     string
 }
 
-type GitRepoClone struct {
-	Url string
-	Type GitRepoType
+type CloneGitRepoRequest struct {
+	Url  string
+	Type *GitRepoType
 	//Tag string
 	//Branch string
 	//Revision string
 	Depth uint
 	//SparsePaths []string
 	CloneLocation string
+	Force         bool
 }
 
 func (gitRepo GitRepoType) GetRepoDir() string {
