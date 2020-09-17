@@ -73,6 +73,8 @@ Global Flags:
 
 # Running
 
+* Clone for the first time
+
 ```shell
 cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
@@ -80,17 +82,38 @@ INFO[2020-09-08T12:28:11-03:00] Cloning into '/Users/marcellodesales/dev/github.
 Enumerating objects: 233, done.
 Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
 INFO[2020-09-08T12:28:18-03:00] Done...
+```
 
+* Existing cloned repos will fail
+
+```
 cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 ERRO[2020-09-08T12:29:58-03:00] Can't clone repo: clone location '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana' exists and it's not empty
 ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!
+```
 
+* Force the clone if needed
+
+```
 cloner git --repo https://github.com/comsysto/redis-locks-with-grafana -f
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:30:42-03:00] Forcing clone...
 INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
 INFO[2020-09-08T12:30:42-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
+Enumerating objects: 233, done.
+Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
+INFO[2020-09-08T12:28:18-03:00] Done...
+```
+
+* You can provide a private key for `git@host:org/repo` URLs
+
+```
+cloner git --repo git@github.com/marcellodesales/cloner --privateKey ~/.ssh/id_gmail
+INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
+INFO[2020-09-08T12:30:42-03:00] Forcing clone...
+INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/marcellodesales/cloner'
+INFO[2020-09-08T12:30:42-03:00] Cloning into '/Users/marcellodesales/dev/github.com/marcellodesales/cloner'
 Enumerating objects: 233, done.
 Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
 INFO[2020-09-08T12:28:18-03:00] Done...
