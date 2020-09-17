@@ -82,7 +82,7 @@ func dirTree(path string, excludedList []string) (gotree.Tree, error) {
 		}
 
 		// Exclude files/dirs in the provided list
-		if excludedList != nil && len(excludedList) > 0 {
+		if len(excludedList) > 0 {
 			for _, excludeFile := range excludedList {
 				if strings.Contains(dir, excludeFile) {
 					return nil

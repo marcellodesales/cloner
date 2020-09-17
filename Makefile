@@ -27,7 +27,12 @@ clean: ## Deletes the directory ./build
 	rm -rf $(DIST_DIR)
 	mkdir $(DIST_DIR)
 
+test: ## Run the test cases
+	@echo "Testing current version $(BIN_VERSION)"
+	go test -v ./...
+
 local: clean ## Makes a local build using Go
+	@echo "Building binary locally $(BIN_VERSION)"
 	GO111MODULE=on CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o dist/cloner-darwin-local main.go
 
 build: clean ## Builds the docker image with binaries
