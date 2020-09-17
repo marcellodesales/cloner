@@ -73,7 +73,7 @@ Global Flags:
 
 # Running
 
-```go
+```shell
 cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:28:11-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
