@@ -47,9 +47,16 @@ func TestGitCloneWithWrongURLs(t *testing.T) {
 func TestGitCloneSuccessfullyForcing(t *testing.T) {
 	existingDirTests := []CliTests{
 		{
-			title: "Given existing cloned repo",
+			title: "Given existing https://host/org/repo repo URL to clone",
 			input: TestInput{
 				url:        "https://github.com/comsysto/redis-locks-with-grafana",
+				forceClone: true},
+			exitCode: 0,
+		},
+		{
+			title: "Given existing 'git@host:org/repo' cloned repo",
+			input: TestInput{
+				url:        "git@github.com:marcellodesales/docker-git-backup-to-s3.git",
 				forceClone: true},
 			exitCode: 0,
 		},

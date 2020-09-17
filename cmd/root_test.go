@@ -50,8 +50,9 @@ func setup() {
 
 // the current CLI input to be tested
 type TestInput struct {
-	url        string
-	forceClone bool
+	url            string
+	forceClone     bool
+	privateKeyPath string
 }
 
 type CliTests struct {
@@ -73,7 +74,7 @@ func ExecuteCliTestsStrategy(t *testing.T, cliTests []CliTests) {
 			Convey(tst.title, t, func() {
 
 				// Actual clone command to be tested
-				exitCode, errors := executeGitClone(tst.input.url, tst.input.forceClone)
+				exitCode, errors := executeGitClone(tst.input.url, tst.input.privateKeyPath, tst.input.forceClone)
 
 				Convey(fmt.Sprintf("The exit code should be %d", tst.exitCode), func() {
 					So(exitCode, ShouldEqual, tst.exitCode)
