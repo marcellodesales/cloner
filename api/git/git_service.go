@@ -16,7 +16,6 @@ limitations under the License.
 package git
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -24,8 +23,12 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type GitServiceType struct{}
@@ -36,24 +39,37 @@ var GitService GitServiceType
 var githubRepoUrlRe = regexp.MustCompile(`(?m)^(?P<protocol>https|git)(:\/\/|@)(?P<host>[^\/:]+)[\/:](?P<user>[^\/:]+)\/(?P<repo>.+).git$`)
 
 // Init from the CLI inputs
-func (service GitServiceType) Init(repoUrl string, forceClone bool) *CloneGitRepoRequest {
-	return &CloneGitRepoRequest{
-		Url:   repoUrl,
-		Force: forceClone,
+func (service GitServiceType) Init(repoUrl, privateKeyPath string, forceClone bool) (*CloneGitRepoRequest, error) {
+	if repoUrl == "" {
+		return nil, fmt.Errorf("you must provide the repo URL")
 	}
+
+	if !strings.HasSuffix(repoUrl, ".git") {
+		repoUrl += ".git"
+	}
+
+	// Make a clone repo request based on the input from the CLI
+	if strings.HasPrefix(repoUrl, "git@") && privateKeyPath == "" {
+		privateKeyPath = fmt.Sprintf("%s/.ssh/id_rsa", os.Getenv("HOME"))
+		log.Debugf("Assuming default private key at '%s': repo URL is prefixed by 'git@'", privateKeyPath)
+	}
+
+	// for git@host:org/repo, SSH keys are used as auth form.
+	if privateKeyPath != "" && !util.FileExists(privateKeyPath) {
+		return nil, fmt.Errorf("private key '%s' does NOT exist. Make sure to provide for ssh-related clones (git@) repos", privateKeyPath)
+	}
+
+	return &CloneGitRepoRequest{
+		Url:            repoUrl,
+		Force:          forceClone,
+		PrivateKeyFile: privateKeyPath,
+	}, nil
 }
 
 /**
  * @return a new instance of the GitRepoType
  */
 func (service GitServiceType) ParseRepoString(gitRepoClone *CloneGitRepoRequest) error {
-	if gitRepoClone.Url == "" {
-		return errors.New("you must provide the repo URL")
-	}
-
-	if !strings.HasSuffix(gitRepoClone.Url, ".git") {
-		gitRepoClone.Url += ".git"
-	}
 	// Parse the regex
 	gitRepoValues, err := util.RegexProcessString(githubRepoUrlRe, gitRepoClone.Url)
 	if err != nil {
@@ -134,16 +150,39 @@ func (service GitServiceType) MakeCloneDir(gitRepoClone *CloneGitRepoRequest, co
 }
 
 /**
- * Clone the git repo to the clone location using go-git
+ * Clone the git repo to the clone location using go-git based on the request
  */
-func (service GitServiceType) GoCloneRepo(gitRepoClone *CloneGitRepoRequest, config *config.Configuration) error {
-	//gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
+func (service GitServiceType) GoCloneRepo(gitRepoCloneRequest *CloneGitRepoRequest, config *config.Configuration) error {
+	var cloneOptions *git.CloneOptions
+	var publicKeys *ssh.PublicKeys
+	var err error
 
 	// https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-go-git
-	_, err := git.PlainClone(gitRepoClone.CloneLocation, false, &git.CloneOptions{
-		URL:      gitRepoClone.Url,
-		Progress: os.Stdout,
-	})
+	log.Debugf("Attempting to clone repo '%s' => '%s'", gitRepoCloneRequest.Url, gitRepoCloneRequest.CloneLocation)
+
+	if gitRepoCloneRequest.PrivateKeyFile != "" {
+		// default private key is
+		publicKeys, err = ssh.NewPublicKeysFromFile("git", gitRepoCloneRequest.PrivateKeyFile, "")
+		if err != nil {
+			return err
+		}
+
+		// https://github.com/go-git/go-git/issues/169
+		log.Debugf("Using public keys %s", publicKeys.String())
+		cloneOptions = &git.CloneOptions{
+			URL:      gitRepoCloneRequest.Url,
+			Auth:     publicKeys,
+			Progress: os.Stdout,
+		}
+
+	} else {
+		cloneOptions = &git.CloneOptions{
+			URL:      gitRepoCloneRequest.Url,
+			Progress: os.Stdout,
+		}
+	}
+
+	_, err = git.PlainClone(gitRepoCloneRequest.CloneLocation, false, cloneOptions)
 	return err
 }
 

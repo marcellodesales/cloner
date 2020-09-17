@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/marcellodesales/cloner/api/git"
@@ -37,8 +38,9 @@ var initCmd = &cobra.Command{
 func GitCloneCmd(cmd *cobra.Command, args []string) {
 	repo, _ := cmd.Flags().GetString("repo")
 	forceClone, _ := cmd.Flags().GetBool("force")
+	privateKey, _ := cmd.Flags().GetString("privateKey")
 
-	exitCode, errors := executeGitClone(repo, forceClone)
+	exitCode, errors := executeGitClone(repo, privateKey, forceClone)
 
 	// Show any errors if any
 	if len(errors) > 0 {
@@ -51,9 +53,11 @@ func GitCloneCmd(cmd *cobra.Command, args []string) {
 	os.Exit(exitCode)
 }
 
-func executeGitClone(repo string, forceClone bool) (int, []error) {
-	// Make a clone repo request based on the input from the CLI
-	cloneRepoRequest := git.GitService.Init(repo, forceClone)
+func executeGitClone(repo, privateKeyPath string, forceClone bool) (int, []error) {
+	cloneRepoRequest, err := git.GitService.Init(repo, privateKeyPath, forceClone)
+	if err != nil {
+		return -1, []error{fmt.Errorf("can't initialize due to parameters' values: %v", err)}
+	}
 
 	// Execute the implementation, getting the exit code and any error
 	return git.CloneGitRepo(cloneRepoRequest, config.INSTANCE)
@@ -71,6 +75,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	initCmd.Flags().StringP("repo", "r", "", "The repo URL to clone")
+	initCmd.Flags().StringP("privateKey", "k", "", "The private key associated to the public key to clone 'git@' repos")
 
 	var verbose = false
 	// https://github.com/spf13/cobra/issues/818#issuecomment-489021216
