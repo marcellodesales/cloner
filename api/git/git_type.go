@@ -34,8 +34,9 @@ type CloneGitRepoRequest struct {
 	//Revision string
 	Depth uint
 	//SparsePaths []string
-	CloneLocation string
-	Force         bool
+	CloneLocation  string
+	Force          bool
+	PrivateKeyFile string
 }
 
 func (gitRepo GitRepoType) GetRepoDir() string {
