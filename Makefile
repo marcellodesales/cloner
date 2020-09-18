@@ -53,12 +53,13 @@ release: dist ## Publishes the built binaries in Github Releases
 	git push origin v$(BIN_VERSION) || true
 	docker run --rm -e GITHUB_HOST=$(PUBLISH_GITHUB_HOST) -e GITHUB_USER=$(PUBLISH_GITHUB_USER) -e GITHUB_TOKEN=$(PUBLISH_GITHUB_TOKEN) -e GITHUB_REPOSITORY=$(PUBLISH_GITHUB_ORG)/$(APP_NAME) -e HUB_PROTOCOL=https -v $(PWD):/git marcellodesales/github-hub release create --prerelease --attach dist/$(APP_NAME)-darwin-amd64 --attach dist/$(APP_NAME)-linux-amd64 --attach dist/$(APP_NAME)-windows-amd64.exe -m "$(APP_NAME) $(BIN_VERSION) release" v$(BIN_VERSION)
 
-save-docker-image: build
+save-docker-image:
 ifndef GITHUB_ACTION
 	$(error GITHUB_ACTION is undefined. This must run only by Github Actions)
 endif
 	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
 	docker save -o ./dist/$(APP_NAME).dockerimage $(BUILD_IMAGE_TAG)
+	ls -la ./dist/$(APP_NAME).dockerimage
 
 docker-push-develop: build ## Pushes develop image to Github Container Registry
 ifndef GITHUB_ACTION

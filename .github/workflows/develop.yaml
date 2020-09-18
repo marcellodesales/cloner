@@ -65,7 +65,7 @@ jobs:
           path: dist/cloner-windows-amd64.exe
 
       # Local cache of docker images
-      - name: Upload Raw Docker Image - Local Cache
+      - name: Upload Docker Image
         uses: actions/upload-artifact@v2
         with:
           name: cloner.dockerimage
@@ -122,7 +122,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Download Raw Docker Image Cache from build
+      - name: Download artifact cloner.dockerimage from build
         uses: actions/download-artifact@v2
         with:
           name: cloner.dockerimage
