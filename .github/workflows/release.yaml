@@ -15,6 +15,7 @@ jobs:
           # https://github.com/actions/checkout/pull/258 needs to fetch all tags
           fetch-depth: 0
 
+        # Publishes the binaries to the Github Release section
       - name: Makefile + Dockerfile dockerized release
         env:
           PUBLISH_GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}

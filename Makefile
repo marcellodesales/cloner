@@ -58,7 +58,7 @@ ifndef GITHUB_ACTION
 	$(error GITHUB_ACTION is undefined. This must run only by Github Actions)
 endif
 	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
-    docker save -o ./dist/$(APP_NAME).dockerimage $(BUILD_IMAGE_TAG)
+	docker save -o ./dist/$(APP_NAME).dockerimage $(BUILD_IMAGE_TAG)
 
 docker-push-develop: build ## Pushes develop image to Github Container Registry
 ifndef GITHUB_ACTION
@@ -66,6 +66,6 @@ ifndef GITHUB_ACTION
 endif
 	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
 	$(eval DEV_IMAGE_NAME=$(shell echo $(BUILD_IMAGE_TAG) | awk -F ':' '{print $$1}'))
-	$(eval MASTER_IMAGE_TAG=docker.pkg.github.com/$(DEV_IMAGE_NAME):develop)
+	$(eval MASTER_IMAGE_TAG=docker.pkg.github.com/$(DEV_IMAGE_NAME)/cli:develop)
 	docker tag $(BUILD_IMAGE_TAG) $(MASTER_IMAGE_TAG)
 	docker push $(MASTER_IMAGE_TAG)
