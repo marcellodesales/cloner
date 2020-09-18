@@ -17,7 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@master
         with:
-          fetch-depth: 1
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
+          fetch-depth: 0
 
       - name: Golang test
         run: make test
@@ -120,6 +121,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
         with:
+          # We just need to current files as the the docker image has been built above (Makefile uses tags to cut release version)
           fetch-depth: 1
 
       - name: Download artifact cloner.dockerimage from build
