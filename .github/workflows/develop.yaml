@@ -40,6 +40,11 @@ jobs:
       - name: Dockerized Binary Distribution
         run: make dist
 
+      # https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
+      # Produces the docker image at the directory ./dist/docker-image.raw
+      - name: Save Raw Docker Image for Reuse
+        run: make save-docker-image
+
       # https://docs.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts#passing-data-between-jobs-in-a-workflow
       - name: Upload MacOS Binary
         uses: actions/upload-artifact@v2
@@ -58,6 +63,13 @@ jobs:
         with:
           name: cloner-windows-amd64.exe
           path: dist/cloner-windows-amd64.exe
+
+      # Local cache of docker images
+      - name: Upload Raw Docker Image - Local Cache
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner.dockerimage
+          path: dist/cloner.dockerimage
 
   # https://github.com/nightlark/ninja/blob/f1a33131154ae7d9648aa82afac462859535fb62/.github/workflows/release-ninja-binaries.yml#L8-L34
   verify:
@@ -80,7 +92,7 @@ jobs:
         with:
           name: ${{ matrix.bin_name }}
 
-      # Install OS specific dependencies
+      # Verify OS specific dependencies
       - name: Unix Binary Validation
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
         env:
@@ -106,10 +118,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@master
+      - name: Download Raw Docker Image Cache from build
+        uses: actions/download-artifact@v2
         with:
-          fetch-depth: 1
+          name: cloner.dockerimage
 
+      - name: Load Docker Image Binary for cache
+        run: |
+          ls -la ./cloner.dockerimage
+          docker load -i ./cloner.dockerimage
+
+      # https://github.com/marcellodesales/cloner/packages?package_type=Docker
       - name: Login to GitHub Packages Docker Registry
         uses: docker/login-action@v1
         with:
@@ -118,5 +137,5 @@ jobs:
           password: ${{ secrets.REGISTRY_GITHUB_TOKEN }}
 
       # Publishes the Docker Images to Github Container Registry
-      - name: Push Docker Images
+      - name: Push Docker Development Images
         run: make docker-push-develop
