@@ -52,3 +52,13 @@ release: dist ## Publishes the built binaries in Github Releases
 	git tag v$(BIN_VERSION) || true
 	git push origin v$(BIN_VERSION) || true
 	docker run --rm -e GITHUB_HOST=$(PUBLISH_GITHUB_HOST) -e GITHUB_USER=$(PUBLISH_GITHUB_USER) -e GITHUB_TOKEN=$(PUBLISH_GITHUB_TOKEN) -e GITHUB_REPOSITORY=$(PUBLISH_GITHUB_ORG)/$(APP_NAME) -e HUB_PROTOCOL=https -v $(PWD):/git marcellodesales/github-hub release create --prerelease --attach dist/$(APP_NAME)-darwin-amd64 --attach dist/$(APP_NAME)-linux-amd64 --attach dist/$(APP_NAME)-windows-amd64.exe -m "$(APP_NAME) $(BIN_VERSION) release" v$(BIN_VERSION)
+
+docker-push-develop: build ## Pushes develop image to Github Container Registry
+ifndef GITHUB_ACTION
+	$(error GITHUB_ACTION is undefined)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
+	$(eval DEV_IMAGE_NAME=$(shell echo $(BUILD_IMAGE_TAG) | awk -F ':' '{print $$1}'))
+	$(eval MASTER_IMAGE_TAG=ghcr.io/$(DEV_IMAGE_NAME):develop)
+	docker tag $(BUILD_IMAGE_TAG) $(MASTER_IMAGE_TAG)
+	docker push $(MASTER_IMAGE_TAG)
