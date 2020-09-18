@@ -59,7 +59,20 @@ RUN export GO_MODULE_FULL_NAME=$(git -C /build/.git remote -v | grep fetch | awk
 FROM alpine:latest
 WORKDIR /root/
 
-# Copy the linux amd64 binary
-COPY --from=builder /build/${BIN_NAME}* /bin/
+ARG BIN_NAME
+ENV BIN_NAME ${BIN_NAME:-unknown}
 
-ENTRYPOINT /bin/${ARG BIN_NAME}-linux-amd64
+# Copy the linux amd64 binary, based on the arg (or else all files are copied) inspect with https://github.com/wagoodman/dive
+COPY --from=builder /build/${BIN_NAME}* /usr/local/bin/
+
+# Move the bin to /usr/local/bin and make the entrypoint to point to it passing the params
+# https://stackoverflow.com/questions/33439230/how-to-write-commands-with-multiple-lines-in-dockerfile-while-preserving-the-new/33439625#33439625
+RUN echo "#!/bin/sh" > /usr/local/bin/entrypoint.sh && \
+    # https://stackoverflow.com/questions/32727594/how-to-pass-arguments-to-shell-script-through-docker-run/40312311#40312311
+    echo "${BIN_NAME} \$@" >> /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    ln -s /usr/local/bin/${BIN_NAME}-linux-amd64 /usr/local/bin/${BIN_NAME}
+    # Delete all binarines that are not the linux one https://www.cyberciti.biz/faq/find-command-exclude-ignore-files/
+    # find /bin -type f -name "cloner-*" ! -path "*linux*" | xargs rm -f && \
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
