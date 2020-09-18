@@ -6,6 +6,7 @@ on:
     branches:
       - develop
       - feature/**
+    # https://stackoverflow.com/questions/62968897/is-it-possible-to-not-run-github-action-for-readme-updates/62972393#62972393
     paths-ignore:
       - '**/README.md'
 
