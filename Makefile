@@ -3,7 +3,7 @@ DIST_DIR = dist
 APP_NAME = cloner
 ORG = marcellodesales
 PUBLISH_GITHUB_USER = marcellodesales 
-#PUBLISH_GITHUB_TOKEN 
+#PUBLISH_GITHUB_TOKEN - Provided as env var to publish Github Release binaries
 PUBLISH_GITHUB_HOST = github.com
 PUBLISH_GITHUB_ORG = marcellodesales
 
@@ -48,6 +48,9 @@ dist: build ## Makes the dir ./dist with binaries from docker image
 	ls -la $(PWD)/$(DIST_DIR)
 
 release: dist ## Publishes the built binaries in Github Releases
+ifndef PUBLISH_GITHUB_TOKEN
+	$(error PUBLISH_GITHUB_TOKEN is undefined. Provide the token in order to publish a release to  Github)
+endif
 	echo "Releasing next version $(BIN_VERSION)"
 	git tag v$(BIN_VERSION) || true
 	git push origin v$(BIN_VERSION) || true
