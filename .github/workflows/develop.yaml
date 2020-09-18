@@ -6,19 +6,19 @@ on:
     branches:
       - develop
       - feature/**
-    # https://stackoverflow.com/questions/62968897/is-it-possible-to-not-run-github-action-for-readme-updates/62972393#62972393
+      - bugfix/**
+      - hotfix/**
     paths-ignore:
-      - '**/README.md'
+      - '**/README.md' # https://stackoverflow.com/questions/62968897/is-it-possible-to-not-run-github-action-for-readme-updates/62972393#62972393
 
 jobs:
   test:
     name: Run Test Cases
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Golang test
         run: make test
@@ -27,12 +27,10 @@ jobs:
     name: Build CLI Binaries
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          fetch-depth: 1
-
-      - name: Golang build
-        run: make local
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
+          fetch-depth: 0
 
       - name: Dockerized Cross-compile Build
         run: make build
@@ -119,10 +117,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          # We just need to current files as the the docker image has been built above (Makefile uses tags to cut release version)
-          fetch-depth: 1
+          # The command will compute the current version to get the docker image name, so it needs all tags
+          fetch-depth: 0
 
       - name: Download artifact cloner.dockerimage from build
         uses: actions/download-artifact@v2

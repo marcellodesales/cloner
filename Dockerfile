@@ -44,6 +44,8 @@ ENV ARCHS "amd64"
 # Build the module name
 COPY .git/ /build/.git/
 
+RUN git -C /build/.git remote -v
+
 # Injecting version info into the golang build https://github.com/Ropes/go-linker-vars-example
 # https://github.com/Ropes/go-linker-vars-example, https://stackoverflow.com/questions/11354518/application-auto-build-versioning/11355611#11355611
 # https://medium.com/@joshroppo/setting-go-1-5-variables-at-compile-time-for-versioning-5b30a965d33e
