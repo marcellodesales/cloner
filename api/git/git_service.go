@@ -17,18 +17,23 @@ package git
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 
-	"github.com/go-git/go-git/v5"
+	"golang.org/x/crypto/ssh"
 
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/go-git/go-git/v5"
 	"github.com/marcellodesales/cloner/config"
 	"github.com/marcellodesales/cloner/util"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/go-git/go-git/plumbing/transport"
+	sshgit "github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	kh "golang.org/x/crypto/ssh/knownhosts"
 )
 
 type GitServiceType struct{}
@@ -106,7 +111,6 @@ func (service GitServiceType) GetOrgLocalPath(gitRepoClone *CloneGitRepoRequest,
 func (service GitServiceType) VerifyCloneDir(gitRepoClone *CloneGitRepoRequest, config *config.Configuration) (bool, error) {
 	// The location is provided by the api
 	gitRepoClone.CloneLocation = service.GetRepoLocalPath(gitRepoClone, config)
-	//log.Debugf("Verifying if the clone path '%s' exists or exists and is empty", gitRepoClone.CloneLocation)
 
 	if util.DirExists(gitRepoClone.CloneLocation) {
 		if gitRepoClone.Force {
@@ -150,28 +154,84 @@ func (service GitServiceType) MakeCloneDir(gitRepoClone *CloneGitRepoRequest, co
 }
 
 /**
+* Executes an auth with the given private key file
+  https://stackoverflow.com/questions/44269142/golang-ssh-getting-must-specify-hoskeycallback-error-despite-setting-it-to-n/63308243#63308243
+  https://skarlso.github.io/2019/02/17/go-ssh-with-host-key-verification/
+  https://github.com/src-d/go-git/issues/637#issuecomment-543015125
+  Needs to execute the agent https://github.com/src-d/go-git/issues/550#issuecomment-323075887
+*/
+func sshAuth(privateKeyFilePath string) (transport.AuthMethod, error) {
+	// Verification on the private key https://github.com/src-d/go-git/issues/637#issuecomment-404851019, not complete though
+	isPrivateKey := func(privateKeyContent string) bool {
+		if len(privateKeyContent) > 1000 && strings.HasPrefix(privateKeyContent, "-----") {
+			return true
+		}
+		return false
+	}
+
+	privateKey, err := ioutil.ReadFile(privateKeyFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read private key: %v", err)
+	}
+
+	if isPrivateKey(string(privateKey)) {
+		signer, err := ssh.ParsePrivateKey(privateKey)
+		if err != nil {
+			return nil, err
+		}
+
+		// Let's assume that if the file exists, there were connections to the host before
+		knownHostsFilePath := fmt.Sprintf("%s/.ssh/known_hosts", os.Getenv("HOME"))
+		if util.FileExists(knownHostsFilePath) {
+			// This whole piece fails because of the missing .ssh/known_hosts file.
+			// TODO Need a way to generate the known_hosts when the file does not exist
+			// https://skarlso.github.io/2019/02/17/go-ssh-with-host-key-verification/
+			knownHostsCallback, err := kh.New(fmt.Sprintf("%s/.ssh/known_hosts", os.Getenv("HOME")))
+			if err != nil {
+				return nil, fmt.Errorf("could not create hostkeycallback function: %v", err)
+			}
+
+			// Verify the key with the content of the known_hosts file
+			return &sshgit.PublicKeys{
+				User:   "git",
+				Signer: signer,
+				HostKeyCallbackHelper: sshgit.HostKeyCallbackHelper{
+					HostKeyCallback: knownHostsCallback,
+				},
+			}, nil
+		}
+
+		// In case the known hosts is not available, just don't verify
+		// This is specific on containers, CI, tests, https://github.com/src-d/go-git/issues/637#issuecomment-404851019
+		return &sshgit.PublicKeys{
+			User:   "git",
+			Signer: signer,
+			HostKeyCallbackHelper: sshgit.HostKeyCallbackHelper{
+				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			},
+		}, nil
+	}
+	return nil, nil
+}
+
+/**
  * Clone the git repo to the clone location using go-git based on the request
  */
 func (service GitServiceType) GoCloneRepo(gitRepoCloneRequest *CloneGitRepoRequest, config *config.Configuration) error {
 	var cloneOptions *git.CloneOptions
-	var publicKeys *ssh.PublicKeys
 	var err error
 
 	// https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-go-git
 	log.Debugf("Attempting to clone repo '%s' => '%s'", gitRepoCloneRequest.Url, gitRepoCloneRequest.CloneLocation)
 
 	if gitRepoCloneRequest.PrivateKeyFile != "" {
-		// default private key is
-		publicKeys, err = ssh.NewPublicKeysFromFile("git", gitRepoCloneRequest.PrivateKeyFile, "")
-		if err != nil {
-			return err
-		}
+		log.Debugf("Authenticating using the key ")
+		auth, _ := sshAuth(gitRepoCloneRequest.PrivateKeyFile)
 
 		// https://github.com/go-git/go-git/issues/169
-		log.Debugf("Using public keys %s", publicKeys.String())
 		cloneOptions = &git.CloneOptions{
 			URL:      gitRepoCloneRequest.Url,
-			Auth:     publicKeys,
+			Auth:     auth,
 			Progress: os.Stdout,
 		}
 
