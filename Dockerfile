@@ -44,14 +44,14 @@ ENV ARCHS "amd64"
 # Build the module name
 COPY .git/ /build/.git/
 
-RUN git -C /build/.git remote -v
-
 # Injecting version info into the golang build https://github.com/Ropes/go-linker-vars-example
 # https://github.com/Ropes/go-linker-vars-example, https://stackoverflow.com/questions/11354518/application-auto-build-versioning/11355611#11355611
 # https://medium.com/@joshroppo/setting-go-1-5-variables-at-compile-time-for-versioning-5b30a965d33e
-RUN export GO_MODULE_FULL_NAME=$(git -C /build/.git remote -v | grep fetch | awk '{print $2}' | sed -En "s/git@//p" | sed -En "s/.git//p" | sed -En "s/:/\//p") && \
-        export BUILD_GIT_SHA=$(git rev-parse --short HEAD) && \
-        for GOOS in ${PLATFORMS}; do for GOARCH in ${ARCHS}; do BINARY="${BIN_NAME}-$GOOS-$GOARCH"; if [ $GOOS = "windows" ]; then BINARY="${BINARY}.exe"; fi; export BUILD_TIME="$(date -u +"%Y-%m-%d_%H:%M:%S_GMT")"; echo "Cross-compiling $GO_MODULE_FULL_NAME@$BUILD_GIT_SHA as ${BINARY}@$BUILD_VERSION at $BUILD_TIME"; GO_MODULE_FULL_NAME=$GO_MODULE_FULL_NAME BUILD_GIT_SHA=$BUILD_GIT_SHA BUILD_VERSION=$BUILD_VERSION BUILD_TIME=$BUILD_TIME GO111MODULE=$GO111MODULE CGO_ENABLED=0 GOARCH=$GOARCH GOOS=$GOOS GOPRIVATE=$GOPRIVATE go build -o ${BINARY} -a -ldflags "-X ${GO_MODULE_FULL_NAME}/config.VersionBuildGoModule=${GO_MODULE_FULL_NAME} -X ${GO_MODULE_FULL_NAME}/config.VersionBuildNumber=${BUILD_VERSION} -X ${GO_MODULE_FULL_NAME}/config.VersionBuildGitSha=${BUILD_GIT_SHA} -X ${GO_MODULE_FULL_NAME}/config.VersionBuildTime=${BUILD_TIME}"; ls -la "/build/${BINARY}"; file "/build/${BINARY}"; chmod +x "/build/${BINARY}"; if [ $GOOS = "linux" ]; then sh -c "/build/${BINARY}"; sh -c "/build/${BINARY} version"; fi; done; done
+RUN export export FULL_NAME_GIT=$(git -C /build/.git remote -v | grep fetch | awk '{print $2}' | sed -En "s/git@//p" | sed -En "s/.git//p" | sed -En "s/:/\//p") && \
+    export export FULL_NAME_HTTP=$(git -C /build/.git remote -v | grep fetch | awk '{print $2}' | sed -En "s/https:\/\///p") && \
+    export GO_MODULE_FULL_NAME=$(if [ ! -z "$FULL_NAME_GIT" ]; then echo "$FULL_NAME_GIT"; else echo "$FULL_NAME_HTTP"; fi) && \
+    export BUILD_GIT_SHA=$(git rev-parse --short HEAD) && \
+    for GOOS in ${PLATFORMS}; do for GOARCH in ${ARCHS}; do BINARY="${BIN_NAME}-$GOOS-$GOARCH"; if [ $GOOS = "windows" ]; then BINARY="${BINARY}.exe"; fi; export BUILD_TIME="$(date -u +"%Y-%m-%d_%H:%M:%S_GMT")"; echo "Cross-compiling $GO_MODULE_FULL_NAME@$BUILD_GIT_SHA as ${BINARY}@$BUILD_VERSION at $BUILD_TIME"; GO_MODULE_FULL_NAME=$GO_MODULE_FULL_NAME BUILD_GIT_SHA=$BUILD_GIT_SHA BUILD_VERSION=$BUILD_VERSION BUILD_TIME=$BUILD_TIME GO111MODULE=$GO111MODULE CGO_ENABLED=0 GOARCH=$GOARCH GOOS=$GOOS GOPRIVATE=$GOPRIVATE go build -o ${BINARY} -a -ldflags "-X ${GO_MODULE_FULL_NAME}/config.VersionBuildGoModule=${GO_MODULE_FULL_NAME} -X ${GO_MODULE_FULL_NAME}/config.VersionBuildNumber=${BUILD_VERSION} -X ${GO_MODULE_FULL_NAME}/config.VersionBuildGitSha=${BUILD_GIT_SHA} -X ${GO_MODULE_FULL_NAME}/config.VersionBuildTime=${BUILD_TIME}"; ls -la "/build/${BINARY}"; file "/build/${BINARY}"; chmod +x "/build/${BINARY}"; if [ $GOOS = "linux" ]; then sh -c "/build/${BINARY}"; sh -c "/build/${BINARY} version"; fi; done; done
 
 # Compress the binaries
 # It is not working with errors like https://github.com/golang/go/issues/19625
