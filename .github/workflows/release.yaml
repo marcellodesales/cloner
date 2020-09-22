@@ -21,3 +21,25 @@ jobs:
           PUBLISH_GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
         run: make release
 
+  push_docker:
+    name: Github Container Release Latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags
+          fetch-depth: 0
+
+      # https://github.com/marcellodesales/cloner/packages?package_type=Docker
+      - name: Login to GitHub Packages Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.REGISTRY_GITHUB_TOKEN }}
+
+        # Publish the docker image to Github Container Registry (latest, master)
+      - name: Build and Push to Github Container Registry
+        env:
+          PUBLISH_GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
+        run: make docker-push-master
