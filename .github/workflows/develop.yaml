@@ -135,7 +135,7 @@ jobs:
       # https://docs.github.com/en/actions/reference/encrypted-secrets as secrets can't be written to files directly
       # Moved the decrypt function to Makefile (test-e2e)
       # Not using https://github.com/webfactory/ssh-agent creates a .known_hosts with the keys
-      - name: Run cloner from Docker with Private Key 
+      - name: Run cloner from Docker with Private Key
         env:
           ID_CLONER_TEST_PASSPHRASE: ${{ secrets.ID_CLONER_TEST_PASSPHRASE }}
         run: make test-e2e
