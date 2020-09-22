@@ -80,7 +80,7 @@ ifndef GITHUB_ACTION
 endif
 	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
 	$(eval DEV_IMAGE_NAME=$(shell echo $(BUILD_IMAGE_TAG) | awk -F ':' '{print $$1}'))
-	$(eval VERSION_TAG=$(shell echo $(BUILD_IMAGE_TAG) | sed 's/[:-]/\/cli:/g'))
+	$(eval VERSION_TAG=$(shell echo docker.pkg.github.com/$(BUILD_IMAGE_TAG) | sed 's/[:-]/\/cli:/g'))
 	$(eval LATEST_IMAGE_TAG=docker.pkg.github.com/$(DEV_IMAGE_NAME)/cli:latest)
 	docker tag $(BUILD_IMAGE_TAG) $(VERSION_TAG)
 	docker push $(VERSION_TAG)
