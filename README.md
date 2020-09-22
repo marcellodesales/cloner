@@ -119,6 +119,33 @@ Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
 INFO[2020-09-08T12:28:18-03:00] Done...
 ```
 
+## From Docker Container
+
+* You can run cloner in docker as well... 
+
+```
+$ docker run -ti -v $(pwd):/data marcellodesales/cloner:20.09.7 git \
+         --repo git@github.com:marcellodesales/unmazedboot.git -v debug -k /data/id_cloner_test
+DEBU[2020-09-18T02:17:38Z] config.git.cloneBaseDir=/root/cloner
+INFO[2020-09-18T02:17:38Z] Cloning into '/root/cloner/github.com/marcellodesales/unmazedboot'
+DEBU[2020-09-18T02:17:38Z] Attempting to clone repo 'git@github.com:marcellodesales/unmazedboot.git' => '/root/cloner/github.com/marcellodesales/unmazedboot'
+DEBU[2020-09-18T02:17:38Z] Authenticating using the key
+Enumerating objects: 16, done.
+Counting objects: 100% (16/16), done.
+Compressing objects: 100% (16/16), done.
+Total 144 (delta 9), reused 2 (delta 0), pack-reused 128
+INFO[2020-09-18T02:17:41Z] Done...
+INFO[2020-09-18T02:17:41Z]
+/root/cloner/github.com/marcellodesales/unmazedboot
+└── .env
+└── CHANGELOG
+└── LICENSE
+└── README.md
+└── builder
+│   ├── gradle.Dockerfile
+│   ├── maven.Dockerfile
+```
+
 # Development
 
 * Here's how we are doing it!
