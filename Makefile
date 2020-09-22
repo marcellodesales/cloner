@@ -3,7 +3,7 @@ DIST_DIR = dist
 APP_NAME = cloner
 ORG = marcellodesales
 PUBLISH_GITHUB_USER = marcellodesales 
-#PUBLISH_GITHUB_TOKEN 
+#PUBLISH_GITHUB_TOKEN - Provided as env var to publish Github Release binaries
 PUBLISH_GITHUB_HOST = github.com
 PUBLISH_GITHUB_ORG = marcellodesales
 
@@ -42,13 +42,45 @@ build: clean ## Builds the docker image with binaries
 
 dist: build ## Makes the dir ./dist with binaries from docker image
 	@echo "Distribution libraries for version $(BIN_VERSION)"
-	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-darwin-amd64 /bins"
-	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-linux-amd64 /bins"
-	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /bin/$(APP_NAME)-windows-amd64.exe /bins"
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /usr/local/bin/$(APP_NAME)-darwin-amd64 /bins"
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /usr/local/bin/$(APP_NAME)-linux-amd64 /bins"
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /usr/local/bin/$(APP_NAME)-windows-amd64.exe /bins"
 	ls -la $(PWD)/$(DIST_DIR)
 
 release: dist ## Publishes the built binaries in Github Releases
+ifndef PUBLISH_GITHUB_TOKEN
+	$(error PUBLISH_GITHUB_TOKEN is undefined. Provide the token in order to publish a release to  Github)
+endif
 	echo "Releasing next version $(BIN_VERSION)"
 	git tag v$(BIN_VERSION) || true
 	git push origin v$(BIN_VERSION) || true
 	docker run --rm -e GITHUB_HOST=$(PUBLISH_GITHUB_HOST) -e GITHUB_USER=$(PUBLISH_GITHUB_USER) -e GITHUB_TOKEN=$(PUBLISH_GITHUB_TOKEN) -e GITHUB_REPOSITORY=$(PUBLISH_GITHUB_ORG)/$(APP_NAME) -e HUB_PROTOCOL=https -v $(PWD):/git marcellodesales/github-hub release create --prerelease --attach dist/$(APP_NAME)-darwin-amd64 --attach dist/$(APP_NAME)-linux-amd64 --attach dist/$(APP_NAME)-windows-amd64.exe -m "$(APP_NAME) $(BIN_VERSION) release" v$(BIN_VERSION)
+
+save-docker-image: ## Saves the raw docker image locally as a cache
+ifndef GITHUB_ACTION
+	$(error GITHUB_ACTION is undefined. This must run only by Github Actions)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
+	docker save -o ./dist/$(APP_NAME).dockerimage $(BUILD_IMAGE_TAG)
+	ls -la ./dist/$(APP_NAME).dockerimage
+
+docker-push-develop: ## Pushes develop image to Github Container Registry
+ifndef GITHUB_ACTION
+	$(error GITHUB_ACTION is undefined. This must run only by Github Actions)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
+	$(eval DEV_IMAGE_NAME=$(shell echo $(BUILD_IMAGE_TAG) | awk -F ':' '{print $$1}'))
+	$(eval MASTER_IMAGE_TAG=docker.pkg.github.com/$(DEV_IMAGE_NAME)/cli:develop)
+	docker tag $(BUILD_IMAGE_TAG) $(MASTER_IMAGE_TAG)
+	docker push $(MASTER_IMAGE_TAG)
+
+test-e2e:
+ifndef ID_CLONER_TEST_PASSPHRASE
+	$(error ID_CLONER_TEST_PASSPHRASE is undefined. This must run only by Github Actions)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
+	mkdir -p ./.github/scripts/.ssh/
+	gpg --quiet --batch --yes --decrypt --passphrase="${ID_CLONER_TEST_PASSPHRASE}" --output ./.github/scripts/.ssh/id_cloner_test ./.github/scripts/id_cloner_test.pgp
+	docker run -v $(PWD)/.github/scripts/.ssh:/tests/certs -v $(PWD)/.github/test-cloned-repos/:/root/cloner $(BUILD_IMAGE_TAG) -v debug git --repo git@github.com:marcellodesales/cloner.git -k /tests/certs/id_cloner_test
+	rm -rf ./.github/scripts/.ssh/
+	[ -d "$(PWD)/.github/test-cloned-repos" ] || echo "Clone from docker did not work!"

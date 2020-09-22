@@ -29,8 +29,8 @@ func TestGitCloneWithWrongURLs(t *testing.T) {
 		{
 			title:              "Given an empty URL to clone",
 			input:              TestInput{url: "", forceClone: false},
-			exitCode:           1,
-			exactErrorMessages: map[string]bool{"git URL invalid: you must provide the repo URL": true},
+			exitCode:           -1,
+			exactErrorMessages: map[string]bool{"can't initialize due to parameters' values: you must provide the repo URL": true},
 		},
 		{
 			title:                "Given an invalid git URL to clone",
@@ -47,12 +47,23 @@ func TestGitCloneWithWrongURLs(t *testing.T) {
 func TestGitCloneSuccessfullyForcing(t *testing.T) {
 	existingDirTests := []CliTests{
 		{
-			title: "Given existing cloned repo",
+			title: "Given existing https://host/org/repo repo URL to clone",
 			input: TestInput{
 				url:        "https://github.com/comsysto/redis-locks-with-grafana",
 				forceClone: true},
 			exitCode: 0,
 		},
+		// In order to test this, add a deploy https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys
+		// Then fetch it locally and provide as a parameter to the action execution.
+		// https://github.com/marketplace/actions/webfactory-ssh-agent
+		// https://github.community/t/github-actions-ci-how-to-use-store-deploy-key-to-download-from-another-private-repo/16113/5
+		//{
+		//	title: "Given existing 'git@host:org/repo' cloned repo",
+		//	input: TestInput{
+		//		url:        "git@github.com:marcellodesales/docker-git-backup-to-s3.git",
+		//		forceClone: true},
+		//	exitCode: 0,
+		//},
 	}
 
 	// Execute the test cases

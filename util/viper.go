@@ -1,12 +1,13 @@
 package util
 
 import (
+	"strings"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/thoas/go-funk"
-	"strings"
 )
 
 func SetupViperHomeConfig(configFile, configName, extension, envPrefix string) {
@@ -44,7 +45,7 @@ func ReadConfig(configPath string, result interface{}) error {
 	if err != nil {
 		return nil
 	}
-	log.Infof("Loading the config object '%s' from '%s'", configPath, configFilePath)
+	log.Debugf("Loading the config object '%s' from '%s'", configPath, configFilePath)
 
 	// Looking for the key of configuration in the config
 	log.Tracef("The keys in the config: %v", viper.AllKeys())

@@ -8,8 +8,14 @@ in a location for all of your git projects based on the host.
 * You don't need to change to the directory where your github repos are located.
 * The base git repo will be based on the host, so they all are on the same place.
 
-```
-$ tree -L 4 ~/dev/
+```shell
+cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+cloner git --repo git@github.com:marcellodesales/alpine-git-hub-docker-image.git
+cloner git --repo https://github.com/intuit/intuit-spring-cloud-config-inspector
+cloner git --repo git@github.com:intuit/unmazedboot
+cloner git --repo https://gitlab.com:supercash/services/sms-gateway-service.git
+
+tree -L 4 ~/dev/
 /Users/marcellodesales/dev/
 ├── github.com
 │   ├── comsysto
@@ -18,16 +24,15 @@ $ tree -L 4 ~/dev/
 │       └── alpine-git-hub-docker-image
 │   ├── intuit
 │   │   ├── intuit-spring-cloud-config-inspector
-│   │   ├── intuit-spring-cloud-config-validator
 │   │   └── unmazedboot
-├── github.google.com
-│   ├── docker
-│   ├── kubernetes
 ├── gitlab.com
 │   └── supercash
 │       └── services
 │           └── sms-gateway-service
 ```
+
+> **ATTENTION**: Assuming all defaults, of the clone location to `~/dev`, the cloned
+> and the private key being `~/.ssh/id_rsa`. See below the options to the CLI.
 
 # Config
 
@@ -44,22 +49,54 @@ When the CLI runs, it will create the dirs `git.cloneBaseDir/git.host/git.org/gi
 
 > NOTE: Gitlab's and other hosts may be located in deeper folders.
 
+# Options
+
+* Just run the help to see the current options
+
+```
+cloner git --help
+Clones a given git repo URL
+
+Usage:
+  cloner git [flags]
+
+Flags:
+  -f, --force               Forces cloning by deleting existing dir
+  -h, --help                help for git
+  -k, --privateKey string   The private key associated to the public key to clone 'git@' repos
+  -r, --repo string         The repo URL to clone
+
+Global Flags:
+      --cloner string      Config file (default is $HOME/.cloner.yaml) (default "cloner")
+  -v, --verbosity string   Log level (debug, info, warn, error, fatal, panic (default "info")
+```
+
 # Running
 
-```go
-$ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+* Clone for the first time
+
+```shell
+cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:28:11-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
 Enumerating objects: 233, done.
 Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
 INFO[2020-09-08T12:28:18-03:00] Done...
+```
 
-$ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+* Existing cloned repos will fail
+
+```
+cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 ERRO[2020-09-08T12:29:58-03:00] Can't clone repo: clone location '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana' exists and it's not empty
 ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!
+```
 
-$ cloner git --repo https://github.com/comsysto/redis-locks-with-grafana -f
+* Force the clone if needed
+
+```
+cloner git --repo https://github.com/comsysto/redis-locks-with-grafana -f
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:30:42-03:00] Forcing clone...
 INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
@@ -69,9 +106,24 @@ Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
 INFO[2020-09-08T12:28:18-03:00] Done...
 ```
 
+* You can provide a private key for `git@host:org/repo` URLs
+
+```
+cloner git --repo git@github.com/marcellodesales/cloner --privateKey ~/.ssh/id_gmail
+INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
+INFO[2020-09-08T12:30:42-03:00] Forcing clone...
+INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/marcellodesales/cloner'
+INFO[2020-09-08T12:30:42-03:00] Cloning into '/Users/marcellodesales/dev/github.com/marcellodesales/cloner'
+Enumerating objects: 233, done.
+Total 233 (delta 0), reused 0 (delta 0), pack-reused 233
+INFO[2020-09-08T12:28:18-03:00] Done...
+```
+
 # Development
 
 * Here's how we are doing it!
+* Go to Github Actions for all automation
+  * [Dockerized exeution through Makefile](https://github.com/marcellodesales/cloner/actions)
 
 ## Design
 

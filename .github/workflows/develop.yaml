@@ -6,13 +6,17 @@ on:
     branches:
       - develop
       - feature/**
+      - bugfix/**
+      - hotfix/**
+    paths-ignore:
+      - '**/README.md' # https://stackoverflow.com/questions/62968897/is-it-possible-to-not-run-github-action-for-readme-updates/62972393#62972393
 
 jobs:
   test:
     name: Run Test Cases
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 1
 
@@ -23,12 +27,10 @@ jobs:
     name: Build CLI Binaries
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          fetch-depth: 1
-
-      - name: Golang build
-        run: make local
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
+          fetch-depth: 0
 
       - name: Dockerized Cross-compile Build
         run: make build
@@ -36,6 +38,11 @@ jobs:
       # Produces the binaries at the directory ./dist
       - name: Dockerized Binary Distribution
         run: make dist
+
+      # https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
+      # Produces the docker image at the directory ./dist/docker-image.raw
+      - name: Save Raw Docker Image for Reuse
+        run: make save-docker-image
 
       # https://docs.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts#passing-data-between-jobs-in-a-workflow
       - name: Upload MacOS Binary
@@ -55,6 +62,13 @@ jobs:
         with:
           name: cloner-windows-amd64.exe
           path: dist/cloner-windows-amd64.exe
+
+      # Local cache of docker images
+      - name: Upload Docker Image
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner.dockerimage
+          path: dist/cloner.dockerimage
 
   # https://github.com/nightlark/ninja/blob/f1a33131154ae7d9648aa82afac462859535fb62/.github/workflows/release-ninja-binaries.yml#L8-L34
   verify:
@@ -77,7 +91,7 @@ jobs:
         with:
           name: ${{ matrix.bin_name }}
 
-      # Install OS specific dependencies
+      # Verify OS specific dependencies
       - name: Unix Binary Validation
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
         env:
@@ -97,3 +111,66 @@ jobs:
           dir
           echo $pwd\$env:BIN_NAME
           start-process -nonewwindow $pwd\$env:BIN_NAME
+
+  e2e:
+    name: Verify Dockerized E2E Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
+          fetch-depth: 0
+
+      - name: Download artifact cloner.dockerimage from build
+        uses: actions/download-artifact@v2
+        with:
+          name: cloner.dockerimage
+
+      - name: Load Docker Image Binary for cache
+        run: |
+          ls -la ./cloner.dockerimage
+          docker load -i ./cloner.dockerimage
+
+      # https://docs.github.com/en/actions/reference/encrypted-secrets as secrets can't be written to files directly
+      # Moved the decrypt function to Makefile (test-e2e)
+      # Not using https://github.com/webfactory/ssh-agent creates a .known_hosts with the keys
+      - name: Run cloner from Docker with Private Key
+        env:
+          ID_CLONER_TEST_PASSPHRASE: ${{ secrets.ID_CLONER_TEST_PASSPHRASE }}
+        run: make test-e2e
+
+      - name: Show cloned files scructure
+        run: docker container run --rm -v $(pwd):$(pwd) iankoulski/tree $(pwd)/.github/test-cloned-repos
+
+  push:
+    name: Push CLI Docker Images
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # The command will compute the current version to get the docker image name, so it needs all tags
+          fetch-depth: 0
+
+      - name: Download artifact cloner.dockerimage from build
+        uses: actions/download-artifact@v2
+        with:
+          name: cloner.dockerimage
+
+      - name: Load Docker Image Binary for cache
+        run: |
+          ls -la ./cloner.dockerimage
+          docker load -i ./cloner.dockerimage
+
+      # https://github.com/marcellodesales/cloner/packages?package_type=Docker
+      - name: Login to GitHub Packages Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.REGISTRY_GITHUB_TOKEN }}
+
+      # Publishes the Docker Images to Github Container Registry
+      - name: Push Docker Development Images
+        run: make docker-push-develop
