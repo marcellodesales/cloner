@@ -73,3 +73,14 @@ endif
 	$(eval MASTER_IMAGE_TAG=docker.pkg.github.com/$(DEV_IMAGE_NAME)/cli:develop)
 	docker tag $(BUILD_IMAGE_TAG) $(MASTER_IMAGE_TAG)
 	docker push $(MASTER_IMAGE_TAG)
+
+test-e2e:
+ifndef ID_CLONER_TEST_PASSPHRASE
+	$(error ID_CLONER_TEST_PASSPHRASE is undefined. This must run only by Github Actions)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
+	mkdir -p ./.github/scripts/.ssh/
+	gpg --quiet --batch --yes --decrypt --passphrase="${ID_CLONER_TEST_PASSPHRASE}" --output ./.github/scripts/.ssh/id_cloner_test ./.github/scripts/id_cloner_test.pgp
+	docker run -v $(PWD)/.github/scripts/.ssh:/tests/certs -v $(PWD)/.github/test-cloned-repos/:/root/cloner $(BUILD_IMAGE_TAG) -v debug git --repo git@github.com:marcellodesales/cloner.git -k /tests/certs/id_cloner_test
+	rm -rf ./.github/scripts/.ssh/
+	[ -d "$(PWD)/.github/test-cloned-repos" ] || echo "Clone from docker did not work!"
