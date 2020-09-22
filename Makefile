@@ -40,6 +40,26 @@ build: clean ## Builds the docker image with binaries
 	@echo "Building next version $(BIN_VERSION)"
 	BIN_VERSION=$(BIN_VERSION) docker-compose build --build-arg BIN_VERSION=$(BIN_VERSION) cli
 
+build-dependencies: clean ## Builds the docker image only with dependencies using buildkit
+	@echo "Building dependencies for version $(BIN_VERSION) - Dependencies ONLY"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) docker-compose build dependencies
+
+compile-linux: build-dependencies ## Compiles for Linux
+	@echo "Compiling version $(BIN_VERSION) for linux"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=linux docker-compose build binaries
+
+compile-darwin: build-dependencies ## Compiles for MacOS
+	@echo "Compiling version $(BIN_VERSION) for darwin"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=darwin docker-compose build binaries
+
+compile-windows: build-dependencies ## Compiles for Windows
+	@echo "Compiling version $(BIN_VERSION) for windows"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=windows docker-compose build binaries
+
+build-docker-runtime:
+	@echo "Building linux runtime for version $(BIN_VERSION)"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=linux docker-compose build runtime
+
 dist: build ## Makes the dir ./dist with binaries from docker image
 	@echo "Distribution libraries for version $(BIN_VERSION)"
 	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /usr/local/bin/$(APP_NAME)-darwin-amd64 /bins"
