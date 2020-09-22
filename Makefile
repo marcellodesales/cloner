@@ -74,6 +74,16 @@ endif
 	docker tag $(BUILD_IMAGE_TAG) $(MASTER_IMAGE_TAG)
 	docker push $(MASTER_IMAGE_TAG)
 
+docker-push-master: build ## Pushes develop image to Github Container Registry
+ifndef GITHUB_ACTION
+	$(error GITHUB_ACTION is undefined. This must run only by Github Actions)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
+	$(eval DEV_IMAGE_NAME=$(shell echo $(BUILD_IMAGE_TAG) | awk -F ':' '{print $$1}'))
+	$(eval LATEST_IMAGE_TAG=docker.pkg.github.com/$(DEV_IMAGE_NAME)/cli:latest)
+	docker tag $(BUILD_IMAGE_TAG) $(LATEST_IMAGE_TAG)
+	docker push $(LATEST_IMAGE_TAG)
+
 test-e2e:
 ifndef ID_CLONER_TEST_PASSPHRASE
 	$(error ID_CLONER_TEST_PASSPHRASE is undefined. This must run only by Github Actions)
