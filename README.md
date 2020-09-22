@@ -122,6 +122,8 @@ INFO[2020-09-08T12:28:18-03:00] Done...
 # Development
 
 * Here's how we are doing it!
+* Go to Github Actions for all automation
+  * [Dockerized exeution through Makefile](https://github.com/marcellodesales/cloner/actions)
 
 ## Design
 
