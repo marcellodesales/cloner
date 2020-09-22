@@ -1,2 +1,5 @@
 .idea/
 dist/
+.github/scripts/.ssh/
+.github/test-cloned-repos/
+
