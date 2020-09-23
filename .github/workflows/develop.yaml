@@ -23,6 +23,33 @@ jobs:
       - name: Golang test
         run: make test
 
+  dependencies:
+    name: Build Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
+          fetch-depth: 0
+
+      - name: Build OS and Golang Dependencies
+        run: make build-dependencies
+        # outputs: the docker image with dependencies that can be used as cache for the binaries
+        # marcellodesales/cloner/dependencies:20.09.12
+
+      # https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
+      # Produces the docker image at the directory ./dist/docker-image.raw
+      - name: Save Raw Docker Image for Dependencies
+        run: make save-dependencies-docker-image
+        # outputs: cloner-dependencies.dockerimage
+
+      # Local cache of docker images
+      - name: Upload Docker Image for Dependencies
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner.dockerimage
+          path: dist/cloner-dependencies.dockerimage
+
   build:
     name: Build CLI Binaries
     runs-on: ubuntu-latest
