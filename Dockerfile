@@ -1,5 +1,5 @@
 #first stage - builder
-FROM golang:1.13.0-stretch as builder
+FROM golang:1.13.0-stretch AS dependencies
 
 WORKDIR /build
 
@@ -18,6 +18,8 @@ COPY go.sum /build/go.sum
 ENV GO111MODULE=on
 RUN go mod download
 
+FROM dependencies AS compiler
+
 # Add the main
 COPY main.go /build/main.go
 
@@ -33,11 +35,13 @@ COPY util /build/util
 
 ARG BIN_NAME
 ARG BIN_VERSION
+ARG PLATFORMS
 
 # Cross-compile all versions
 ENV BIN_NAME ${BIN_NAME:-unknown}
 ENV BUILD_VERSION ${BIN_VERSION:-0.1.0}
-ENV PLATFORMS "darwin linux windows"
+ENV PLATFORMS ${PLATFORMS:-darwin linux windows}
+RUN echo "Building for ${PLATFORMS}"
 ENV ARCHS "amd64"
 #ENV ARCHS "386 amd64"
 
@@ -58,14 +62,14 @@ RUN export export FULL_NAME_GIT=$(git -C /build/.git remote -v | grep fetch | aw
 #RUN upx --lzma /build/${BIN_NAME}*
 
 # Build the main container (Linux Runtime)
-FROM alpine:latest
+FROM alpine:latest AS runtime
 WORKDIR /root/
 
 ARG BIN_NAME
 ENV BIN_NAME ${BIN_NAME:-unknown}
 
 # Copy the linux amd64 binary, based on the arg (or else all files are copied) inspect with https://github.com/wagoodman/dive
-COPY --from=builder /build/${BIN_NAME}* /usr/local/bin/
+COPY --from=compiler /build/${BIN_NAME}* /usr/local/bin/
 
 # Move the bin to /usr/local/bin and make the entrypoint to point to it passing the params
 # https://stackoverflow.com/questions/33439230/how-to-write-commands-with-multiple-lines-in-dockerfile-while-preserving-the-new/33439625#33439625

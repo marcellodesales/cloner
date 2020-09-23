@@ -40,6 +40,35 @@ build: clean ## Builds the docker image with binaries
 	@echo "Building next version $(BIN_VERSION)"
 	BIN_VERSION=$(BIN_VERSION) docker-compose build --build-arg BIN_VERSION=$(BIN_VERSION) cli
 
+build-dependencies: clean ## Builds the docker image only with dependencies using buildkit
+	@echo "Building dependencies for version $(BIN_VERSION) - Dependencies ONLY"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) docker-compose build dependencies
+
+save-dependencies-docker-image: ## Saves the raw docker image of dependencies for cache
+ifndef GITHUB_ACTION
+	$(error GITHUB_ACTION is undefined. This must run only by Github Actions)
+endif
+	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image: | grep dependencies | awk '{print $$2}'))
+	docker save -o ./dist/$(APP_NAME)-dependencies.dockerimage $(BUILD_IMAGE_TAG)
+	ls -la ./dist/$(APP_NAME)-dependencies.dockerimage
+
+compile-%: build-dependencies ## Compiles for (darwin, linux, windows)
+	$(eval PLATFORM=$(shell echo $@ | awk -F"-" '{print $$2}'))
+	@echo "Compiling version $(BIN_VERSION) for $(PLATFORM)"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=$(PLATFORM) docker-compose build binaries
+
+build-docker-runtime:
+	@echo "Building linux runtime for version $(BIN_VERSION)"
+	DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=linux docker-compose build runtime
+
+dist-%: ## Makes the dir ./dist with binaries from docker image
+	$(eval PLATFORM=$(shell echo $@ | awk -F"-" '{print $$2}'))
+	@echo "$(PLATFORM) Distribution binary for version $(BIN_VERSION)"
+	$(eval DIST_IMAGE=$(shell DOCKER_BUILDKIT=1 BIN_VERSION=$(BIN_VERSION) PLATFORMS=$(PLATFORM) docker-compose config | grep image: | grep binaries | awk '{print $$2}'))
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(DIST_IMAGE) -c "cp /build/$(APP_NAME)-$(PLATFORM)-amd64s /bins" || true
+	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(DIST_IMAGE) -c "cp /build/$(APP_NAME)-$(PLATFORM)-amd64.exe /bins" || true
+	ls -la $(PWD)/$(DIST_DIR)
+
 dist: build ## Makes the dir ./dist with binaries from docker image
 	@echo "Distribution libraries for version $(BIN_VERSION)"
 	docker run --rm --entrypoint sh -v $(PWD)/$(DIST_DIR):/bins $(ORG)/$(APP_NAME):$(BIN_VERSION) -c "cp /usr/local/bin/$(APP_NAME)-darwin-amd64 /bins"

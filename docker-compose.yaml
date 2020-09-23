@@ -1,11 +1,36 @@
-version: "3"
+version: "3.8"
 
 services:
 
-  cli:
+  # Usually takes time to download, and can be reused for all platforms
+  dependencies:
+    image: marcellodesales/cloner/dependencies:${BIN_VERSION:-0.1.0}
+    build:
+      context: .
+      target: dependencies
+
+  # Reuses the dependencies image as cache so we can parallelize binary builds
+  binaries:
+    image: marcellodesales/cloner/binaries-${PLATFORMS:-all}:${BIN_VERSION:-0.1.0}
+    build:
+      context: .
+      args:
+        - BIN_NAME=cloner
+        - BIN_VERSION=${BIN_VERSION:-0.1.0}
+        - PLATFORMS=${PLATFORMS:-darwin linux windows}
+      cache_from:
+        - marcellodesales/cloner/dependencies:${BIN_VERSION:-0.1.0}
+      target: compiler
+
+  # Reuses the dependencies image as cache so we can parallelize binary builds
+  runtime:
     image: marcellodesales/cloner:${BIN_VERSION:-0.1.0}
     build:
       context: .
       args:
         - BIN_NAME=cloner
         - BIN_VERSION=${BIN_VERSION:-0.1.0}
+        - PLATFORMS=linux
+      cache_from:
+        - marcellodesales/cloner/binaries-linux:${BIN_VERSION:-0.1.0}
+      target: runtime
