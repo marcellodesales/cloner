@@ -50,58 +50,75 @@ jobs:
           name: cloner.dockerimage
           path: dist/cloner-dependencies.dockerimage
 
-  build:
-    name: Build CLI Binaries
-    runs-on: ubuntu-latest
+  # https://github.com/nightlark/ninja/blob/f1a33131154ae7d9648aa82afac462859535fb62/.github/workflows/release-ninja-binaries.yml#L8-L34
+  compile:
+    name: Compile CLI as Binaries
+    runs-on: ${{ matrix.os }}
+    needs: dependencies
+    strategy:
+      matrix:
+        os: [darwin, linux, windows]
+        include:
+          - os: darwin
+            extension:
+          - os: linux
+            extension:
+          - os: windows
+            extension: .exe
     steps:
       - uses: actions/checkout@v2
         with:
           # https://github.com/actions/checkout/pull/258 needs to fetch all tags so that Makefile can make the correct version
           fetch-depth: 0
 
-      - name: Dockerized Cross-compile Build
-        run: make build
+      - name: Download Docker Image for Dependencies as cache
+        uses: actions/download-artifact@v2
+        with:
+          name: cloner-dependencies.dockerimage
 
-      # Produces the binaries at the directory ./dist
-      - name: Dockerized Binary Distribution
-        run: make dist
+      - name: Load Docker Image Dependencies for cache to compile
+        run: |
+          ls -la ./cloner.dockerimage
+          docker load -i ./cloner-dependencies.dockerimage
 
-      # https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
-      # Produces the docker image at the directory ./dist/docker-image.raw
-      - name: Save Raw Docker Image for Reuse
+      # Compiles for OS specific dependencies through Dockerkit
+      - name: Compile for ${{matrix.os}}
+        env:
+          OS_NAME: ${{ matrix.os }}
+        run: make compile-${OS_NAME}
+
+      # Compiles for OS specific dependencies through Dockerkit
+      - name: Get distribution binaries for ${{matrix.os}}
+        env:
+          OS_NAME: ${{ matrix.os }}
+        run: make dist-${OS_NAME}
+
+      - name: Upload ${{ matrix.os }} Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: cloner-${{ matrix.os }}-amd64.${{ matrix.extension }}
+          path: dist/cloner-${{ matrix.os }}-amd64.${{ matrix.extension }}
+
+      # Compiles for OS specific dependencies through Dockerkit
+      - name: Save docker runtime image for ${{matrix.os}}
+        if: matrix.os == 'linux'
+        env:
+          OS_NAME: ${{ matrix.os }}
         run: make save-docker-image
+        # output: docker image saved at ./dist/cloner.dockerimage
 
-      # https://docs.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts#passing-data-between-jobs-in-a-workflow
-      - name: Upload MacOS Binary
+      - name: Upload runtime docker image
         uses: actions/upload-artifact@v2
-        with:
-          name: cloner-darwin-amd64
-          path: dist/cloner-darwin-amd64
-
-      - name: Upload Linux Binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: cloner-linux-amd64
-          path: dist/cloner-linux-amd64
-
-      - name: Upload Windows Binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: cloner-windows-amd64.exe
-          path: dist/cloner-windows-amd64.exe
-
-      # Local cache of docker images
-      - name: Upload Docker Image
-        uses: actions/upload-artifact@v2
+        if: matrix.os == 'linux'
         with:
           name: cloner.dockerimage
-          path: dist/cloner.dockerimage
+          path: ./dist/cloner.dockerimage
 
   # https://github.com/nightlark/ninja/blob/f1a33131154ae7d9648aa82afac462859535fb62/.github/workflows/release-ninja-binaries.yml#L8-L34
   verify:
     name: Verify CLI Binaries
     runs-on: ${{ matrix.os }}
-    needs: build
+    needs: compile
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
@@ -133,7 +150,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         env:
           BIN_NAME: ${{ matrix.bin_name }}
-        # https://stackoverflow.com/questions/53961802/how-to-use-an-environment-variable-in-powershell-command/53963070#53963070
+        # start-process -nonewwindow https://stackoverflow.com/questions/53961802/how-to-use-an-environment-variable-in-powershell-command/53963070#53963070
         run: |
           dir
           echo $pwd\$env:BIN_NAME
@@ -142,7 +159,7 @@ jobs:
   e2e:
     name: Verify Dockerized E2E Test
     runs-on: ubuntu-latest
-    needs: build
+    needs: compile
     steps:
       - uses: actions/checkout@v2
         with:
@@ -173,7 +190,7 @@ jobs:
   push:
     name: Push CLI Docker Images
     runs-on: ubuntu-latest
-    needs: build
+    needs: compile
     steps:
       - uses: actions/checkout@v2
         with:
