@@ -25,22 +25,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// The repo to clone
+var repoToClone string
+
 // initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "git",
-	Short: "Clones a given git repo",
-	Long:  `Clones a given git repo URL`,
-	Run:   GitCloneCmd,
+var localCloneCmd = &cobra.Command{
+	Use:   "local REPO",
+	Short: "Clones a given git repo locally",
+	Long:  `Clones a given git repo URL to the local file-system`,
+	Run:   CloneGitRepoLocallyCmd,
 }
 
 // Exposed command for testing
 // https://stackoverflow.com/questions/59709345/how-to-implement-unit-tests-for-cli-commands-in-go/59714127#59714127
-func GitCloneCmd(cmd *cobra.Command, args []string) {
-	repo, _ := cmd.Flags().GetString("repo")
+func CloneGitRepoLocallyCmd(cmd *cobra.Command, args []string) {
+	// https://github.com/spf13/cobra/issues/378#issuecomment-304014202
+	if len(args) == 0 {
+		repoToClone = ""
+	}
 	forceClone, _ := cmd.Flags().GetBool("force")
 	privateKey, _ := cmd.Flags().GetString("privateKey")
 
-	exitCode, errors := executeGitClone(repo, privateKey, forceClone)
+	exitCode, errors := executeGitClone(repoToClone, privateKey, forceClone)
 
 	// Show any errors if any
 	if len(errors) > 0 {
@@ -64,7 +70,7 @@ func executeGitClone(repo, privateKeyPath string, forceClone bool) (int, []error
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(localCloneCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -74,10 +80,11 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	initCmd.Flags().StringP("repo", "r", "", "The repo URL to clone")
-	initCmd.Flags().StringP("privateKey", "k", "", "The private key associated to the public key to clone 'git@' repos")
+	// https://github.com/spf13/cobra/issues/378#issuecomment-304014202 param value to command
+	localCloneCmd.Flags().StringVarP(&repoToClone, "repo", "r", "", "REPO is The repo URL to clone.")
+	localCloneCmd.Flags().StringP("privateKey", "k", "", "The private key associated to the public key to clone 'git@' repos")
 
-	var verbose = false
+	var force = false
 	// https://github.com/spf13/cobra/issues/818#issuecomment-489021216
-	initCmd.Flags().BoolVarP(&verbose, "force", "f", false, "Forces cloning by deleting existing dir")
+	localCloneCmd.Flags().BoolVarP(&force, "force", "f", false, "Forces cloning by deleting existing dir")
 }

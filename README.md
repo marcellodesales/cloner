@@ -7,13 +7,16 @@ in a location for all of your git projects based on the host.
 
 * You don't need to change to the directory where your github repos are located.
 * The base git repo will be based on the host, so they all are on the same place.
+* Commands are idempotent
+  * For repeated repos, you must use the force option
 
 ```shell
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
-cloner git --repo git@github.com:marcellodesales/alpine-git-hub-docker-image.git
-cloner git --repo https://github.com/intuit/intuit-spring-cloud-config-inspector
-cloner git --repo git@github.com:intuit/unmazedboot
-cloner git --repo https://gitlab.com:supercash/services/sms-gateway-service.git
+cloner local https://github.com/comsysto/redis-locks-with-grafana
+cloner local git@github.com:marcellodesales/alpine-git-hub-docker-image.git
+cloner local https://github.com/intuit/intuit-spring-cloud-config-inspector
+cloner local git@github.com:intuit/unmazedboot
+cloner local https://gitlab.com:supercash/services/sms-gateway-service.git
+cloner local https://github.com/comsysto/redis-locks-with-grafana -f
 
 tree -L 4 ~/dev/
 /Users/marcellodesales/dev/
@@ -54,11 +57,11 @@ When the CLI runs, it will create the dirs `git.cloneBaseDir/git.host/git.org/gi
 * Just run the help to see the current options
 
 ```
-cloner git --help
+cloner local repo --help
 Clones a given git repo URL
 
 Usage:
-  cloner git [flags]
+  cloner local [flags]
 
 Flags:
   -f, --force               Forces cloning by deleting existing dir
@@ -76,7 +79,7 @@ Global Flags:
 * Clone for the first time
 
 ```shell
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+cloner local --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:28:11-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
 Enumerating objects: 233, done.
@@ -87,7 +90,7 @@ INFO[2020-09-08T12:28:18-03:00] Done...
 * Existing cloned repos will fail
 
 ```
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+cloner local --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 ERRO[2020-09-08T12:29:58-03:00] Can't clone repo: clone location '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana' exists and it's not empty
 ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!
@@ -96,7 +99,7 @@ ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the exis
 * Force the clone if needed
 
 ```
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana -f
+cloner local --repo https://github.com/comsysto/redis-locks-with-grafana -f
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:30:42-03:00] Forcing clone...
 INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
@@ -109,7 +112,7 @@ INFO[2020-09-08T12:28:18-03:00] Done...
 * You can provide a private key for `git@host:org/repo` URLs
 
 ```
-cloner git --repo git@github.com/marcellodesales/cloner --privateKey ~/.ssh/id_gmail
+cloner local --repo git@github.com/marcellodesales/cloner --privateKey ~/.ssh/id_gmail
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:30:42-03:00] Forcing clone...
 INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/marcellodesales/cloner'
