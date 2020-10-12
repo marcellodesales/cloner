@@ -30,7 +30,7 @@ var repoToClone string
 
 // initCmd represents the init command
 var localCloneCmd = &cobra.Command{
-	Use:   "local",
+	Use:   "local REPO",
 	Short: "Clones a given git repo locally",
 	Long:  `Clones a given git repo URL to the local file-system`,
 	Run:   CloneGitRepoLocallyCmd,
@@ -39,7 +39,10 @@ var localCloneCmd = &cobra.Command{
 // Exposed command for testing
 // https://stackoverflow.com/questions/59709345/how-to-implement-unit-tests-for-cli-commands-in-go/59714127#59714127
 func CloneGitRepoLocallyCmd(cmd *cobra.Command, args []string) {
-	repoToClone = args[0]
+	// https://github.com/spf13/cobra/issues/378#issuecomment-304014202
+	if len(args) == 0 {
+		repoToClone = ""
+	}
 	forceClone, _ := cmd.Flags().GetBool("force")
 	privateKey, _ := cmd.Flags().GetString("privateKey")
 
@@ -77,7 +80,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	localCloneCmd.Flags().StringVarP(&repoToClone, "repo", "r", "", "The repo URL to clone (MAIN PARAM)")
+	// https://github.com/spf13/cobra/issues/378#issuecomment-304014202 param value to command
+	localCloneCmd.Flags().StringVarP(&repoToClone, "repo", "r", "", "REPO is The repo URL to clone.")
 	localCloneCmd.Flags().StringP("privateKey", "k", "", "The private key associated to the public key to clone 'git@' repos")
 
 	var force = false
