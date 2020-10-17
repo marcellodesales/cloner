@@ -11,12 +11,12 @@ in a location for all of your git projects based on the host.
   * For repeated repos, you must use the force option
 
 ```shell
-cloner local https://github.com/comsysto/redis-locks-with-grafana
-cloner local git@github.com:marcellodesales/alpine-git-hub-docker-image.git
-cloner local https://github.com/intuit/intuit-spring-cloud-config-inspector
-cloner local git@github.com:intuit/unmazedboot
-cloner local https://gitlab.com:supercash/services/sms-gateway-service.git
-cloner local https://github.com/comsysto/redis-locks-with-grafana -f
+cloner local -r https://github.com/comsysto/redis-locks-with-grafana
+cloner local --repo git@github.com:marcellodesales/alpine-git-hub-docker-image.git
+cloner local -r https://github.com/intuit/intuit-spring-cloud-config-inspector
+cloner local -r git@github.com:intuit/unmazedboot
+cloner local -r https://gitlab.com:supercash/services/sms-gateway-service.git
+cloner local -r https://github.com/comsysto/redis-locks-with-grafana -f
 
 tree -L 4 ~/dev/
 /Users/marcellodesales/dev/
@@ -57,7 +57,7 @@ When the CLI runs, it will create the dirs `git.cloneBaseDir/git.host/git.org/gi
 * Just run the help to see the current options
 
 ```
-cloner local repo --help
+cloner local --help
 Clones a given git repo URL
 
 Usage:
@@ -214,6 +214,21 @@ The CLI will print the help
 ```console
 $ ./dist/cloner-darwin-amd64
 ```
+
+## Remote Debug
+
+* Use `debug.docker-compose.yaml` to start a Delve container that listens to port `:40000`.
+  * https://github.com/igor-kupczynski/remote-debug-example
+  * Details at PR #29
+
+```
+$ docker-compose -f debug.docker-compose.yaml up
+Recreating cloner_cli-debug_1 ... done
+Attaching to cloner_cli-debug_1
+cli-debug_1  | API server listening at: [::]:40000
+```
+
+* For example, open Goland and use a `Go Remote` debug instance with port `40000`.
 
 ## Bug Reports & Feature Requests
 
