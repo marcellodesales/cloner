@@ -215,6 +215,21 @@ The CLI will print the help
 $ ./dist/cloner-darwin-amd64
 ```
 
+## Remote Debug
+
+* Use `debug.docker-compose.yaml` to start a Delve container that listens to port `:40000`.
+  * https://github.com/igor-kupczynski/remote-debug-example
+  * Details at PR #29
+
+```
+$ docker-compose -f debug.docker-compose.yaml up
+Recreating cloner_cli-debug_1 ... done
+Attaching to cloner_cli-debug_1
+cli-debug_1  | API server listening at: [::]:40000
+```
+
+* For example, open Goland and use a `Go Remote` debug instance with port `40000`.
+
 ## Bug Reports & Feature Requests
 
 Please use the [issue tracker](https://github.com/marcellodesales/cloner/issues) to report any bugs or file feature requests.
