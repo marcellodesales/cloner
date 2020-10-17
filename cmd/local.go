@@ -25,9 +25,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// The repo to clone
-var repoToClone string
-
 // initCmd represents the init command
 var localCloneCmd = &cobra.Command{
 	Use:   "local REPO",

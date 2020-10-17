@@ -94,6 +94,6 @@ endif
 	$(eval BUILD_IMAGE_TAG=$(shell BIN_VERSION=$(BIN_VERSION) docker-compose config | grep image | awk '{print $$2}'))
 	mkdir -p ./.github/scripts/.ssh/
 	gpg --quiet --batch --yes --decrypt --passphrase="${ID_CLONER_TEST_PASSPHRASE}" --output ./.github/scripts/.ssh/id_cloner_test ./.github/scripts/id_cloner_test.pgp
-	docker run -v $(PWD)/.github/scripts/.ssh:/tests/certs -v $(PWD)/.github/test-cloned-repos/:/root/cloner $(BUILD_IMAGE_TAG) -v debug local git@github.com:marcellodesales/cloner.git -k /tests/certs/id_cloner_test
+	docker run -v $(PWD)/.github/scripts/.ssh:/tests/certs -v $(PWD)/.github/test-cloned-repos/:/root/cloner $(BUILD_IMAGE_TAG) -v debug local -r git@github.com:marcellodesales/cloner.git -k /tests/certs/id_cloner_test
 	rm -rf ./.github/scripts/.ssh/
 	[ -d "$(PWD)/.github/test-cloned-repos" ] || echo "Clone from docker did not work!"
