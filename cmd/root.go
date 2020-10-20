@@ -41,8 +41,8 @@ it can place software in specific location designed.`,
 	//	Run: func(cmd *cobra.Command, args []string) { },
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+//Execute adds all child commands to the root command and sets flags appropriately.
+//This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -56,7 +56,7 @@ func init() {
 	// will be global for your application.
 
 	// Setup Viper Configuration file type
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "cloner", "cloner",
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".cloner",
 		"Config file (default is $HOME/.cloner.yaml)")
 
 	// Callbacks to initilize, in order, for cobra-viper-anything else
@@ -87,4 +87,8 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	var verbose = false
+	// https://github.com/spf13/cobra/issues/818#issuecomment-489021216
+	rootCmd.Flags().BoolVarP(&verbose, "force", "f", false, "Forces cloning by deleting existing dir")
 }

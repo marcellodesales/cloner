@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+
+  # Debug the CLI with Golang Delve https://kupczynski.info/2020/05/17/remote-debug-go-code.html
+  # Based on https://github.com/igor-kupczynski/remote-debug-example
+  cli-debug:
+    image: marcellodesales/cloner-debug:${BIN_VERSION:-0.1.0}
+    build:
+      context: .
+      dockerfile: debug.Dockerfile
+      args:
+        - BIN_NAME=cloner
+        - BIN_VERSION=${BIN_VERSION:-0.1.0}
+        # Change the command to debug, as it runs with Delv
+        - DEBUG_COMMAND=-v debug local https://github.com/igor-kupczynski/remote-debug-example -f
+    ports:
+      - 40000:40000

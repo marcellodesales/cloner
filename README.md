@@ -7,13 +7,16 @@ in a location for all of your git projects based on the host.
 
 * You don't need to change to the directory where your github repos are located.
 * The base git repo will be based on the host, so they all are on the same place.
+* Commands are idempotent
+  * For repeated repos, you must use the force option
 
 ```shell
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
-cloner git --repo git@github.com:marcellodesales/alpine-git-hub-docker-image.git
-cloner git --repo https://github.com/intuit/intuit-spring-cloud-config-inspector
-cloner git --repo git@github.com:intuit/unmazedboot
-cloner git --repo https://gitlab.com:supercash/services/sms-gateway-service.git
+cloner local -r https://github.com/comsysto/redis-locks-with-grafana
+cloner local --repo git@github.com:marcellodesales/alpine-git-hub-docker-image.git
+cloner local -r https://github.com/intuit/intuit-spring-cloud-config-inspector
+cloner local -r git@github.com:intuit/unmazedboot
+cloner local -r https://gitlab.com:supercash/services/sms-gateway-service.git
+cloner local -r https://github.com/comsysto/redis-locks-with-grafana -f
 
 tree -L 4 ~/dev/
 /Users/marcellodesales/dev/
@@ -54,11 +57,11 @@ When the CLI runs, it will create the dirs `git.cloneBaseDir/git.host/git.org/gi
 * Just run the help to see the current options
 
 ```
-cloner git --help
+cloner local --help
 Clones a given git repo URL
 
 Usage:
-  cloner git [flags]
+  cloner local [flags]
 
 Flags:
   -f, --force               Forces cloning by deleting existing dir
@@ -76,7 +79,7 @@ Global Flags:
 * Clone for the first time
 
 ```shell
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+cloner local --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:28:11-03:00] Cloning into '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
 Enumerating objects: 233, done.
@@ -87,7 +90,7 @@ INFO[2020-09-08T12:28:18-03:00] Done...
 * Existing cloned repos will fail
 
 ```
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana
+cloner local --repo https://github.com/comsysto/redis-locks-with-grafana
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 ERRO[2020-09-08T12:29:58-03:00] Can't clone repo: clone location '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana' exists and it's not empty
 ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the existing dir and clone again. Make sure there are no panding changes!
@@ -96,7 +99,7 @@ ERRO[2020-09-08T12:29:58-03:00] You can specify --force or -f to delete the exis
 * Force the clone if needed
 
 ```
-cloner git --repo https://github.com/comsysto/redis-locks-with-grafana -f
+cloner local --repo https://github.com/comsysto/redis-locks-with-grafana -f
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:30:42-03:00] Forcing clone...
 INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/comsysto/redis-locks-with-grafana'
@@ -109,7 +112,7 @@ INFO[2020-09-08T12:28:18-03:00] Done...
 * You can provide a private key for `git@host:org/repo` URLs
 
 ```
-cloner git --repo git@github.com/marcellodesales/cloner --privateKey ~/.ssh/id_gmail
+cloner local --repo git@github.com/marcellodesales/cloner --privateKey ~/.ssh/id_gmail
 INFO[0000] Loading the config object 'git' from '/Users/marcellodesales/.cloner.yaml'
 INFO[2020-09-08T12:30:42-03:00] Forcing clone...
 INFO[2020-09-08T12:30:42-03:00] Deleted dir '/Users/marcellodesales/dev/github.com/marcellodesales/cloner'
@@ -211,6 +214,21 @@ The CLI will print the help
 ```console
 $ ./dist/cloner-darwin-amd64
 ```
+
+## Remote Debug
+
+* Use `debug.docker-compose.yaml` to start a Delve container that listens to port `:40000`.
+  * https://github.com/igor-kupczynski/remote-debug-example
+  * Details at PR #29
+
+```
+$ docker-compose -f debug.docker-compose.yaml up
+Recreating cloner_cli-debug_1 ... done
+Attaching to cloner_cli-debug_1
+cli-debug_1  | API server listening at: [::]:40000
+```
+
+* For example, open Goland and use a `Go Remote` debug instance with port `40000`.
 
 ## Bug Reports & Feature Requests
 
